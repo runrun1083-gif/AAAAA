@@ -1,0 +1,22 @@
+--- CURRENT DATE ---
+2026-01-16T15:02:41Z
+--- EXEC PATH ---
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin:/Users/yamaguchinaoyuki/.orbstack/bin:/opt/homebrew/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Users/yamaguchinaoyuki/.volta/bin:/Users/yamaguchinaoyuki/.orbstack/bin:/Users/yamaguchinaoyuki/.local/bin:/Users/yamaguchinaoyuki/.orbstack/bin
+--- WHICH PYTHON ---
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+--- WHICH PIP ---
+pip not found
+--- WHICH UV ---
+/Users/yamaguchinaoyuki/.local/bin/uv
+--- ENV ---
+VSCODE_PYTHON_AUTOACTIVATE_GUARD=1
+PYTHONPATH=/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA:/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA:
+VIRTUAL_ENV=/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv
+VIRTUAL_ENV_PROMPT=.venv
+--- VENV LINK ---
+drwxr-xr-x@ 8 yamaguchinaoyuki  staff  256 Jan 16 14:30 .venv

@@ -1,0 +1,35 @@
+--- EXEC PATH ---
+/Users/yamaguchinaoyuki/.orbstack/bin:/opt/homebrew/bin:/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/opt/pmk/env/global/bin:/Users/yamaguchinaoyuki/.volta/bin:/Users/yamaguchinaoyuki/.orbstack/bin:/Users/yamaguchinaoyuki/.local/bin:/Users/yamaguchinaoyuki/.antigravity/extensions/ms-python.debugpy-2025.18.0-darwin-arm64/bundled/scripts/noConfigScripts:/Users/yamaguchinaoyuki/.orbstack/bin
+--- WHICH PYTHON ---
+python not found
+--- WHICH PIP ---
+pip not found
+--- WHICH CMAKE ---
+/opt/homebrew/bin/cmake
+/opt/homebrew/bin/cmake
+--- WHICH UV ---
+/Users/yamaguchinaoyuki/.local/bin/uv
+--- ENV ---
+PYTHONSTARTUP=/Users/yamaguchinaoyuki/Library/Application Support/Antigravity/User/workspaceStorage/1c98ae6d7e0fedb8e299c1169344099c/ms-python.python/pythonrc.py
+PYTHON_BASIC_REPL=1
+VSCODE_PYTHON_AUTOACTIVATE_GUARD=1
+VIRTUAL_ENV=/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA//.venv
+--- VENV LINK ---
+drwxr-xr-x@ 8 yamaguchinaoyuki  staff  256 Jan 16 14:30 .venv
+--- PYTHON INFO ---
+Executable: /Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/bin/python
+Path: ['', '/Users/yamaguchinaoyuki/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python312.zip', '/Users/yamaguchinaoyuki/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12', '/Users/yamaguchinaoyuki/.local/share/uv/python/cpython-3.12.12-macos-aarch64-none/lib/python3.12/lib-dynload', '/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv/lib/python3.12/site-packages']
+--- UV PIP LIST ---
+Package         Version
+--------------- -----------
+et-xmlfile      2.0.0
+mlx             0.30.3
+mlx-metal       0.30.3
+numpy           2.4.1
+openpyxl        3.1.5
+pandas          2.3.3
+pybind11        3.0.1
+python-dateutil 2.9.0.post0
+pytz            2025.2
+six             1.17.0
+tzdata          2025.3

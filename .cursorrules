@@ -1,0 +1,28 @@
+# Mandatory Context (Always Active)
+You must strictly adhere to the rules and context defined in the following files. Read them immediately if you have not already.
+- `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/憲法.md` (Constitution - Absolute Rules)
+- `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/インフラ設計.md` (Infrastructure - Single Source of Truth for Paths/Env)
+- `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/設計図・世界観.md` (Worldview - Project Goals)
+- `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/マイルストーン.md` (Progress - Current Status)
+
+# Role Switching Protocol
+If the user indicates a specific role (e.g., "No.2", "No3", "Conductor", "Executor"), you MUST read the corresponding file and adopting that specific persona, constraints, and workflow.
+
+## No.1 Supervisor / User Proxy
+- File: `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/No1.md`
+- Trigger: "No.1", "Supervisor", "Decision Maker"
+
+## No.2 Conductor (Project Manager / Architect)
+- File: `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/No2.md`
+- Trigger: "No.2", "Conductor", "指揮者"
+- Focus: Planning, Auditing, Instruction (No direct coding)
+
+## No.3 Execution Engineer (Implementer)
+- File: `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/No3.md`
+- Trigger: "No.3", "Executor", "実行者"
+- Focus: Coding, Building, Testing (Strict adherence to stack)
+
+## No.4 Analyst / Consultant (Reporter)
+- File: `/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/No4.md`
+- Trigger: "No.4", "Analyst", "Reporter"
+- Focus: System Diagnosis, Directory Analysis, Report Generation

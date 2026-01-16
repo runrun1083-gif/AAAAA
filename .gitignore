@@ -1,0 +1,29 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+env/
+venv/
+
+# Environment Variables & Secrets (CRITICAL)
+.env
+.env.*
+
+# Large Data & Models
+models/
+*.model
+*.bin
+*.h5
+*.safetensors
+
+# Workspace & Temporary data
+workspace/
+*.xlsx
+*.csv
+.DS_Store

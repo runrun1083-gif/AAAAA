@@ -1,0 +1,143 @@
+憲法:venv環境の維持、レポート及び報告を日本語にしなさい
+##ディレクトリー構造整理
+プロジェクトルート内のディレクトリを調査し、開発における大切なファイルを作成する。追加した場合/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。最新のディレクトリー構造を/追記または上書きすること（上書きする際は過去のディレクトリー構造のみを差し替えること）Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/インフラ設計.mdに
+
+＃＃環境チェックプロトコル
+システム環境の全容を以下のJSONフォーマットに従って厳密にレポートせよ。
+全ての項目は、実際にコマンド（which -a, env, sys.path等）を実行した結果に基づき、日本語で記述すること。推測は一切禁止する。作成したレポートを/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。
+
+{
+  "調査日時": "2026-01-16T15:20:00Z",
+  "実行パス解析": {
+    "PATH環境変数": "現在の$PATHの全内容",
+    "優先順位分析": "どのディレクトリが最優先されているか、不自然な順序はないか",
+    "ツールの実体": {
+      "python": ["which -a で見つかったすべてのパスをリストアップ"],
+      "pip": ["which -a で見つかったすべてのパスをリストアップ"],
+      "cmake": ["which -a で見つかったすべてのパスをリストアップ"],
+      "uv": ["which -a で見つかったすべてのパスをリストアップ"]
+    }
+  },
+  "Python環境詳細": {
+    "現在アクティブなPython": "sys.executable の結果",
+    "仮想環境の有効性": "現在 .venv が正しく認識され、有効化されているか（はい/いいえ）",
+    "ライブラリ探索順序": ["sys.path の全内容。どこを優先してライブラリを探しているか"],
+    "パッケージ比較": {
+      "仮想環境のみ": ["uv pip list にあり、グローバルにないもの"],
+      "グローバルのみ": ["システム側にのみ存在する重要なパッケージ"],
+      "競合・重複": ["両方に存在し、バージョンが異なるもの（例：pybind11の有無など）"]
+    }
+  },
+  "環境変数の汚染確認": {
+    "PYTHONPATH": "設定されていればその値、なければ '未設定'",
+    "その他の干渉": "ビルドに影響を与えそうな変数（LD_LIBRARY_PATH等）の抽出"
+  },
+  "物理構成": {
+    "venvの実体": "ls -ld .venv の結果。シンボリックリンクのリンク先など",
+    "プロジェクトルート": "現在の作業ディレクトリのフルパス"
+  },
+  "総合診断": "仮想環境とグローバル環境で発生している『ねじれ』や『干渉』の具体的な結論"
+}
+
+※注意：このJSONを出力するまで、コードの編集やパッケージのインストールは絶対に行わないこと。
+
+
+
+
+＃＃評価プロトコル
+現在のプロジェクトの進捗を確認し、開発の専門家５人になって厳しく評価、批判しろ、アドバイス、それをここに書き込め作成したレポートを/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。
+
+
+＃＃エラーチェックプロトコル
+以下のスクリプトを使い、エクセルデータを確認して、エラー、将来的リスク見つけ作成したレポートを/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。
+
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/logic_miner.py
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/A.xlsx
+
+
+＃＃引き継ぎプロトコル
+以下の形式で調査し作成したレポートを/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。
+🛠 開発環境完全引き継ぎカルテ (JSON形式)
+{
+  "カルテ情報": {
+    "作成日時": "2026-01-16T17:00:00JST",
+    "プロジェクト名": "AAAAA_Core_Visualization",
+    "最終更新者環境": "macOS Apple M1 (Arm64)"
+  },
+  "0_ホスト環境とインフラ": {
+    "OS_アーキテクチャ": "macOS / Apple M1 (Arm64)",
+    "パッケージ_ランタイム管理": {
+      "Python": "3.12 (uv管理下)",
+      "Node": "Volta / nvm 等の状況を記述",
+      "C_Compiler": "Clang (Apple LLVM)"
+    },
+    "Docker使用状況": {
+      "使用": "OrbStack等",
+      "現状": "稼働中/停止中"
+    },
+    "ネットワーク設定": {
+      "使用ポート": {
+        "3000": "フロントエンド用",
+        "8000": "バックエンドAPI用",
+        "11434": "Ollama/ローカルLLM用"
+      },
+      "ファイアウォール": "特記事項なし"
+    }
+  },
+  "1_パス解決とディレクトリ構造": {
+    "プロジェクトルート": "/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA",
+    "コマンド実行推奨ディレクトリ": {
+      "バックエンド操作": "./ (プロジェクトルート直下)",
+      "フロントエンド操作": "./frontend (存在する場合)"
+    },
+    "パスエイリアス設定": "src/ -> ./core 等の定義があれば記述",
+    "注意事項": "必ず .venv を有効化した状態で実行すること"
+  },
+  "2_プロジェクト構造": {
+    "ファイルツリー概要": "主要なフォルダ構成をここに記述",
+    "重要なディレクトリ説明": {
+      "core/": "C++/Objective-C++のソースコード",
+      ".venv/": "Python 3.12 仮想環境",
+      "build/": "CMakeビルド出力先"
+    }
+  },
+  "3_環境設定ファイルの状態": {
+    "CMakeLists_txt": "仮想環境パス固定済み、pybind11/imnodes連携設定済み",
+    "dot_env": "VIRTUAL_ENV/PATH設定を記述済み"
+  },
+  "4_依存関係とインストール": {
+    "パッケージマネージャー": "uv (Python), Homebrew (System)",
+    "インストール手順": {
+      "バックエンド": [
+        "uv venv",
+        "source .venv/bin/activate",
+        "uv pip install pandas openpyxl pybind11"
+      ],
+      "フロントエンド": "npm install (必要時)"
+    }
+  },
+  "5_環境変数": {
+    "重要変数": {
+      "VIRTUAL_ENV": "/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/.venv",
+      "PATH": ".venv/bin を最優先に設定",
+      "API_URL": "設定があれば記述"
+    }
+  },
+  "6_技術スタック概要": [
+    "C++20",
+    "Objective-C++ (Metal)",
+    "Python 3.12 (Pandas)",
+    "pybind11",
+    "ImGui / imnodes"
+  ],
+  "7_主要実装状況": {
+    "完了機能": [
+      "CMakeLists.txt の環境固定設定",
+      "Logic Miner (Pandas) による依存関係解析"
+    ],
+    "実装中_未完了": [
+      "GraphVisualizer.cpp のノード描画ロジック",
+      "C++からのPython関数呼び出しテスト"
+    ],
+    "既知の問題": {
+      "名前空間の誤認": "imnodes:: を ImNodes::

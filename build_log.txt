@@ -1,0 +1,35 @@
+[  8%] Building OBJCXX object CMakeFiles/core_app.dir/core/main.mm.o
+In file included from /Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/main.mm:204:
+In file included from /Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/GraphVisualizer.hpp:6:
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/build/_deps/imnodes-src/imnodes.h:223:1: error: namespaces can only be defined in global or namespace scope
+  223 | {
+      | ^
+In file included from /Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/main.mm:204:
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/GraphVisualizer.hpp:10:17: error: namespaces can only be defined in global or namespace scope
+   10 | namespace aaaaa {
+      |                 ^
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/main.mm:217:16: error: no type named 'GraphVisualizer' in namespace 'aaaaa::core'
+  217 |   aaaaa::core::GraphVisualizer visualizer;
+      |   ~~~~~~~~~~~~~^
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/main.mm:277:28: error: invalid use of incomplete type 'ImVec2'
+  277 |                            ImVec2(100, 0));
+      |                            ^~~~~~~~~~~~~~
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/build/_deps/imnodes-src/imnodes.h:202:8: note: forward declaration of 'ImVec2'
+  202 | struct ImVec2;
+      |        ^
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/core/main.mm:277:28: error: no viable conversion from 'ImVec2' to 'const ImVec2'
+  277 |                            ImVec2(100, 0));
+      |                            ^~~~~~~~~~~~~~
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/build/_deps/imgui-src/imgui.h:300:8: note: candidate constructor (the implicit copy constructor) not viable: cannot convert argument of incomplete type 'ImVec2' to 'const ImVec2 &' for 1st argument
+  300 | struct ImVec2
+      |        ^~~~~~
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/build/_deps/imgui-src/imgui.h:300:8: note: candidate constructor (the implicit move constructor) not viable: cannot convert argument of incomplete type 'ImVec2' to 'ImVec2 &&' for 1st argument
+  300 | struct ImVec2
+      |        ^~~~~~
+/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/build/_deps/imgui-src/imgui.h:649:71: note: passing argument to parameter 'size_arg' here
+  649 |     IMGUI_API void          ProgressBar(float fraction, const ImVec2& size_arg = ImVec2(-FLT_MIN, 0), const char* overlay = NULL);
+      |                                                                       ^
+5 errors generated.
+make[2]: *** [CMakeFiles/core_app.dir/core/main.mm.o] Error 1
+make[1]: *** [CMakeFiles/core_app.dir/all] Error 2
+make: *** [all] Error 2
