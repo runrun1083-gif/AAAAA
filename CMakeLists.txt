@@ -186,6 +186,8 @@ set(CORE_SOURCES
     core/Application.cpp
     core/NodeSystem.cpp
     core/MLXEngine.cpp
+    core/FileScanner.cpp
+    core/GraphLayout.cpp
 )
 
 # macOS の場合は main.mm を使用、それ以外は main.cpp
