@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include <mutex>
+#include <atomic>
 
 // ==============================================================================
 // MLX推論エンジン (C++ API - Python経由なし)

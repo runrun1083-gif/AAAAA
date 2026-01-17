@@ -171,6 +171,9 @@ target_include_directories(imnodes PUBLIC
     ${IMGUI_DIR}
 )
 
+# imnodes requires IMGUI_DEFINE_MATH_OPERATORS
+target_compile_definitions(imnodes PRIVATE IMGUI_DEFINE_MATH_OPERATORS)
+
 target_link_libraries(imnodes PUBLIC imgui)
 
 # ==============================================================================

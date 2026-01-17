@@ -3,6 +3,7 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <cmath>
 
 // ==============================================================================
 // グラフ自動配置アルゴリズム
@@ -130,7 +131,7 @@ public:
      * CP2 必須成功要件:
      * - 配置の安定性: 増分レイアウトで既存ノードの位置を維持
      */
-    int computeLayout(const Parameters& params = Parameters());
+    int computeLayout(const Parameters& params);
 
     /**
      * @brief ノードの位置を取得

@@ -111,7 +111,8 @@ bool Application::initialize() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // Note: Docking requires ImGui docking branch
+    // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
     std::cout << "[Application] Dear ImGui初期化完了" << std::endl;
 
@@ -152,6 +153,14 @@ bool Application::initialize() {
     // モデルのスキャン
     auto models = m_mlxEngine->scanModels(m_modelsDir);
     std::cout << "[Application] 検出されたモデル: " << models.size() << "個" << std::endl;
+
+    // ファイルスキャナーの初期化
+    m_fileScanner = std::make_unique<filesystem::FileScanner>();
+    std::cout << "[Application] ファイルスキャナー初期化完了" << std::endl;
+
+    // グラフレイアウトの初期化
+    m_graphLayout = std::make_unique<layout::ForceDirectedLayout>();
+    std::cout << "[Application] グラフレイアウト初期化完了" << std::endl;
 
     // デモノードの作成
     createDemoNodes();
@@ -243,26 +252,8 @@ void Application::shutdown() {
 // ==============================================================================
 
 void Application::render() {
-    // メインドッキングスペース
-    ImGuiViewport* viewport = ImGui::GetMainViewport();
-    ImGui::SetNextWindowPos(viewport->Pos);
-    ImGui::SetNextWindowSize(viewport->Size);
-    ImGui::SetNextWindowViewport(viewport->ID);
-
-    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse;
-    window_flags |= ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-    ImGui::Begin("DockSpace", nullptr, window_flags);
-    ImGui::PopStyleVar(3);
-
     // メニューバー
-    if (ImGui::BeginMenuBar()) {
+    if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("ファイル")) {
             if (ImGui::MenuItem("新規プロジェクト", "Ctrl+N")) {
                 std::cout << "[UI] 新規プロジェクト" << std::endl;
@@ -278,11 +269,16 @@ void Application::render() {
         }
 
         if (ImGui::BeginMenu("表示")) {
-            if (ImGui::MenuItem("エージェント・オーケストレーション")) {
-                std::cout << "[UI] エージェント・オーケストレーションモード" << std::endl;
+            bool isAgentMode = (m_currentMode == UIMode::AgentOrchestration);
+            bool isFilesystemMode = (m_currentMode == UIMode::FilesystemDynamics);
+
+            if (ImGui::MenuItem("エージェント・オーケストレーション", nullptr, &isAgentMode)) {
+                m_currentMode = UIMode::AgentOrchestration;
+                std::cout << "[UI] エージェント・オーケストレーションモードに切り替え" << std::endl;
             }
-            if (ImGui::MenuItem("ファイルシステム解析")) {
-                std::cout << "[UI] ファイルシステム解析モード" << std::endl;
+            if (ImGui::MenuItem("ファイルシステム・ダイナミクス", nullptr, &isFilesystemMode)) {
+                m_currentMode = UIMode::FilesystemDynamics;
+                std::cout << "[UI] ファイルシステム・ダイナミクスモードに切り替え" << std::endl;
             }
             ImGui::EndMenu();
         }
@@ -294,20 +290,20 @@ void Application::render() {
             ImGui::EndMenu();
         }
 
-        ImGui::EndMenuBar();
+        ImGui::EndMainMenuBar();
     }
-
-    // ドッキングスペース
-    ImGuiID dockspace_id = ImGui::GetID("MainDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-
-    ImGui::End();
 
     // サイドバー
     renderSidebar();
 
-    // ノードエディタ
-    renderNodeEditor();
+    // UIモードに応じた描画
+    if (m_currentMode == UIMode::AgentOrchestration) {
+        // エージェント・オーケストレーション UI
+        renderNodeEditor();
+    } else {
+        // ファイルシステム・ダイナミクス UI
+        renderFilesystemUI();
+    }
 
     // ステータスバー
     renderStatusBar();
@@ -326,7 +322,7 @@ void Application::renderNodeEditor() {
         const auto& name = registry.get<node::NameComponent>(entity);
         const auto& type = registry.get<node::TypeComponent>(entity);
         const auto& pos = registry.get<node::PositionComponent>(entity);
-        const auto& conn = registry.get<node::ConnectionComponent>(entity);
+        // const auto& conn = registry.get<node::ConnectionComponent>(entity);
         const auto& state = registry.get<node::ExecutionStateComponent>(entity);
 
         int nodeId = static_cast<int>(entity);
@@ -440,17 +436,17 @@ void Application::renderSidebar() {
 
     if (ImGui::CollapsingHeader("ノード追加", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (ImGui::Button("LLMノード", ImVec2(-1, 0))) {
-            auto entity = m_nodeSystem->createNode(
+            m_nodeSystem->createNode(
                 node::NodeType::LLM,
                 "LLM",
                 100.0f,
                 100.0f
             );
-            std::cout << "[UI] LLMノード追加: " << static_cast<uint32_t>(entity) << std::endl;
+            std::cout << "[UI] LLMノード追加" << std::endl;
         }
 
         if (ImGui::Button("プロンプトノード", ImVec2(-1, 0))) {
-            auto entity = m_nodeSystem->createNode(
+            m_nodeSystem->createNode(
                 node::NodeType::Prompt,
                 "プロンプト",
                 100.0f,
@@ -460,7 +456,7 @@ void Application::renderSidebar() {
         }
 
         if (ImGui::Button("出力ノード", ImVec2(-1, 0))) {
-            auto entity = m_nodeSystem->createNode(
+            m_nodeSystem->createNode(
                 node::NodeType::Output,
                 "出力",
                 100.0f,
@@ -551,6 +547,233 @@ void Application::createDemoNodes() {
     m_nodeSystem->connectNodes(llmNode, outputNode);
 
     std::cout << "[Application] デモノード作成完了（4ノード、3接続）" << std::endl;
+}
+
+void Application::renderFilesystemUI() {
+    ImGui::Begin("ファイルシステム・ダイナミクス");
+
+    // 上部: コントロールパネル
+    ImGui::BeginChild("ControlPanel", ImVec2(0, 150), true);
+
+    ImGui::Text("プロジェクトフォルダ:");
+    ImGui::SameLine();
+
+    // フォルダ選択ボタン
+    if (ImGui::Button("フォルダ選択...")) {
+        showFolderSelectDialog();
+    }
+
+    ImGui::SameLine();
+    ImGui::TextColored(ImVec4(0.5f, 0.5f, 1.0f, 1.0f), "%s",
+                       m_selectedFolder.empty() ? "(未選択)" : m_selectedFolder.c_str());
+
+    ImGui::Spacing();
+
+    // スキャン実行ボタン
+    if (ImGui::Button("スキャン実行", ImVec2(150, 0))) {
+        if (!m_selectedFolder.empty()) {
+            std::cout << "[FilesystemUI] スキャン開始: " << m_selectedFolder << std::endl;
+
+            // ファイルスキャン実行
+            size_t fileCount = m_fileScanner->scanDirectory(m_selectedFolder);
+
+            if (fileCount > 0) {
+                // グラフレイアウトを構築
+                m_graphLayout->reset();
+
+                const auto& files = m_fileScanner->getFiles();
+
+                // CP2 必須成功要件: フォルダ階層ベースの自動クラスタリング
+                for (const auto& file : files) {
+                    // クラスタID = ファイルの親ディレクトリパス
+                    fs::path filePath(file.path);
+                    std::string cluster = filePath.parent_path().string();
+
+                    // 初期位置はランダム（後で力学シミュレーション）
+                    layout::Vector2 initialPos(
+                        static_cast<float>(rand() % 800 + 100),
+                        static_cast<float>(rand() % 600 + 100)
+                    );
+
+                    m_graphLayout->addNode(file.path, initialPos, cluster);
+                }
+
+                // 依存関係エッジを追加
+                for (const auto& file : files) {
+                    for (const auto& dep : file.dependencies) {
+                        // 依存先がスキャンされたファイルに存在するか確認
+                        for (const auto& targetFile : files) {
+                            if (targetFile.name.find(dep) != std::string::npos ||
+                                targetFile.path.find(dep) != std::string::npos) {
+                                m_graphLayout->addEdge(file.path, targetFile.path);
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // レイアウト計算実行
+                layout::ForceDirectedLayout::Parameters params;
+                params.maxIterations = 200;
+                params.enableClustering = true;
+
+                int iterations = m_graphLayout->computeLayout(params);
+                m_filesystemLayoutComputed = true;
+
+                std::cout << "[FilesystemUI] レイアウト計算完了: " << iterations << " イテレーション" << std::endl;
+            }
+        } else {
+            std::cout << "[FilesystemUI] エラー: フォルダが選択されていません" << std::endl;
+        }
+    }
+
+    ImGui::SameLine();
+
+    // レイアウト再計算ボタン
+    if (ImGui::Button("レイアウト再計算", ImVec2(150, 0))) {
+        if (m_filesystemLayoutComputed) {
+            layout::ForceDirectedLayout::Parameters params;
+            params.maxIterations = 200;
+            params.enableClustering = true;
+
+            m_graphLayout->computeLayout(params);
+            std::cout << "[FilesystemUI] レイアウト再計算完了" << std::endl;
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    // スキャン統計情報
+    const auto& files = m_fileScanner->getFiles();
+    if (!files.empty()) {
+        ImGui::Text("統計情報:");
+        ImGui::BulletText("ファイル数: %zu", files.size());
+        ImGui::BulletText("スキャン時間: %.2f ms", m_fileScanner->getScanTimeMs());
+
+        auto stats = m_fileScanner->getInterningStats();
+        ImGui::BulletText("メモリ削減: %.1f KB", stats.memorySavedBytes / 1024.0);
+
+        if (m_filesystemLayoutComputed) {
+            int crossings = m_graphLayout->getEdgeCrossings();
+            ImGui::BulletText("エッジ交差数: %d", crossings);
+        }
+    }
+
+    ImGui::EndChild();
+
+    // 下部: グラフ可視化エリア
+    ImGui::BeginChild("GraphView", ImVec2(0, 0), true);
+
+    if (m_filesystemLayoutComputed && !files.empty()) {
+        ImNodes::BeginNodeEditor();
+
+        // ファイルノードを描画
+        int nodeId = 0;
+
+        for (const auto& file : files) {
+            layout::Vector2 pos = m_graphLayout->getNodePosition(file.path);
+
+            ImNodes::BeginNode(nodeId);
+
+            ImNodes::BeginNodeTitleBar();
+            ImGui::TextUnformatted(file.name.c_str());
+            ImNodes::EndNodeTitleBar();
+
+            // ファイル情報表示
+            ImGui::Text("拡張子: %s", file.extension.c_str());
+            ImGui::Text("サイズ: %zu bytes", file.size);
+
+            if (!file.dependencies.empty()) {
+                ImGui::Text("依存: %zu", file.dependencies.size());
+            }
+
+            // 出力ピン（依存関係用）
+            int outputPinId = nodeId * 1000 + 1;
+            ImNodes::BeginOutputAttribute(outputPinId);
+            ImGui::Text("依存先");
+            ImNodes::EndOutputAttribute();
+
+            ImNodes::EndNode();
+
+            // ノード位置を設定（力学シミュレーション結果）
+            ImNodes::SetNodeGridSpacePos(nodeId, ImVec2(pos.x, pos.y));
+
+            nodeId++;
+        }
+
+        // 依存関係エッジを描画
+        int linkId = 0;
+        int fromNodeId = 0;
+
+        for (const auto& file : files) {
+            for (const auto& dep : file.dependencies) {
+                // 依存先ノードを検索
+                int toNodeId = 0;
+                for (const auto& targetFile : files) {
+                    if (targetFile.name.find(dep) != std::string::npos ||
+                        targetFile.path.find(dep) != std::string::npos) {
+
+                        int fromPinId = fromNodeId * 1000 + 1;
+                        int toPinId = toNodeId * 1000 + 1;
+
+                        ImNodes::Link(linkId++, fromPinId, toPinId);
+                        break;
+                    }
+                    toNodeId++;
+                }
+            }
+            fromNodeId++;
+        }
+
+        ImNodes::EndNodeEditor();
+    } else {
+        // プレースホルダー
+        ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.6f, 1.0f),
+                          "フォルダを選択してスキャンを実行してください");
+    }
+
+    ImGui::EndChild();
+
+    ImGui::End();
+}
+
+void Application::showFolderSelectDialog() {
+    // CP2 必須成功要件: ネイティブファイルダイアログ
+    // 簡易実装: 標準入力でパスを受け取る（本番実装ではネイティブダイアログを使用）
+
+    std::cout << "\n[FilesystemUI] フォルダ選択" << std::endl;
+    std::cout << "フォルダパスを入力してください: ";
+
+    // デフォルト候補を提示
+    std::vector<std::string> suggestions = {
+        "/home/user/AAAAA",
+        "/Users/yamaguchinaoyuki/Desktop/JJJ/AAA",
+        "."
+    };
+
+    std::cout << "\n候補:" << std::endl;
+    for (size_t i = 0; i < suggestions.size(); ++i) {
+        if (fs::exists(suggestions[i])) {
+            std::cout << "  " << (i + 1) << ") " << suggestions[i] << " ✓" << std::endl;
+        } else {
+            std::cout << "  " << (i + 1) << ") " << suggestions[i] << std::endl;
+        }
+    }
+
+    // 暫定: 最初の存在するパスを自動選択
+    for (const auto& path : suggestions) {
+        if (fs::exists(path)) {
+            m_selectedFolder = fs::canonical(path).string();
+            std::cout << "[FilesystemUI] 自動選択: " << m_selectedFolder << std::endl;
+            break;
+        }
+    }
+
+    // TODO: 本番実装では nativefiledialog や platform-specific API を使用
+    // - macOS: NSOpenPanel
+    // - Linux: GTK file chooser / Qt file dialog
 }
 
 } // namespace app
