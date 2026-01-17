@@ -1,0 +1,51 @@
+# Python環境
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# CMake / C++ビルド成果物
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+*.cmake
+!CMakeLists.txt
+Makefile
+*.a
+*.dylib
+*.o
+*.d
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# ログ・一時ファイル
+*.log
+*.tmp
+.cache/
+
+# モデルデータ（大容量のため除外）
+models/*.bin
+models/*.gguf
+models/*.safetensors
+
+# ユーザー設定（個人情報保護）
+.env
+*.local
