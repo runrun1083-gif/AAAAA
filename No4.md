@@ -48,11 +48,7 @@
 現在のプロジェクトの進捗を確認し、開発の専門家５人になって厳しく評価、批判しろ、アドバイス、それをここに書き込め作成したレポートを/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。
 
 
-＃＃エラーチェックプロトコル
-以下のスクリプトを使い、エクセルデータを確認して、エラー、将来的リスク見つけ作成したレポートを/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/レポート.mdに書き込むこと。
 
-/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/logic_miner.py
-/Users/yamaguchinaoyuki/Desktop/JJJ/AAAAA/A.xlsx
 
 
 ＃＃引き継ぎプロトコル
