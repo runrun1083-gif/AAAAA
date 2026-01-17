@@ -234,6 +234,19 @@ elseif(HAVE_OPENGL)
 endif()
 
 # ==============================================================================
+# ベンチマークツール
+# ==============================================================================
+add_executable(benchmark
+    tools/benchmark.cpp
+    core/FileScanner.cpp
+    core/GraphLayout.cpp
+)
+
+target_include_directories(benchmark PRIVATE
+    ${CMAKE_SOURCE_DIR}/core
+)
+
+# ==============================================================================
 # インストール設定
 # ==============================================================================
 install(TARGETS ai_dev_station DESTINATION bin)
