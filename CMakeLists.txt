@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.18)
-project(AIDevStation VERSION 0.1.0 LANGUAGES CXX OBJCXX)
+
+# プラットフォームに応じて言語を設定
+if(APPLE)
+    project(AIDevStation VERSION 0.1.0 LANGUAGES CXX OBJCXX)
+else()
+    project(AIDevStation VERSION 0.1.0 LANGUAGES CXX)
+endif()
 
 # ==============================================================================
 # AI開発ステーション - 本格実装
@@ -43,6 +49,17 @@ elseif(UNIX)
     # Linux 最適化
     message(STATUS "✓ Linux 検出: ネイティブ最適化を有効化")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+
+    # OpenGL の検出（オプショナル）
+    find_package(OpenGL)
+    if(OpenGL_FOUND)
+        message(STATUS "✓ OpenGL 検出")
+        set(HAVE_OPENGL TRUE)
+    else()
+        message(WARNING "⚠ OpenGL が見つかりません。GUIは動作しません。")
+        message(WARNING "  インストール: sudo apt install libgl1-mesa-dev libglu1-mesa-dev")
+        set(HAVE_OPENGL FALSE)
+    endif()
 endif()
 
 # 共通最適化フラグ
@@ -136,6 +153,10 @@ if(APPLE)
         ${COREVIDEO_LIBRARY}
         ${QUARTZCORE_LIBRARY}
     )
+elseif(HAVE_OPENGL)
+    target_link_libraries(imgui PUBLIC
+        OpenGL::GL
+    )
 endif()
 
 # ==============================================================================
@@ -200,6 +221,10 @@ if(APPLE)
         ${IOKIT_LIBRARY}
         ${COREVIDEO_LIBRARY}
         ${QUARTZCORE_LIBRARY}
+    )
+elseif(HAVE_OPENGL)
+    target_link_libraries(ai_dev_station PRIVATE
+        OpenGL::GL
     )
 endif()
 
