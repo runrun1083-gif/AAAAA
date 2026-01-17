@@ -183,6 +183,28 @@ target_link_libraries(imnodes PUBLIC imgui)
 # 現在はスタブとして実装
 
 # ==============================================================================
+# Tree-sitter 統合計画（改善法2への対応）
+# ==============================================================================
+# AST解析を自前パーサーではなく、Tree-sitterで実装
+#
+# インストール手順（Ubuntu/Debian）:
+# sudo apt install tree-sitter libtree-sitter-dev
+#
+# 言語パーサー:
+# - tree-sitter-cpp
+# - tree-sitter-python
+# - tree-sitter-typescript
+#
+# find_package(TreeSitter)
+# if(TreeSitter_FOUND)
+#     set(CORE_SOURCES ${CORE_SOURCES} core/TreeSitterParser.cpp)
+#     target_link_libraries(ai_dev_station PRIVATE tree-sitter)
+#     message(STATUS "✓ Tree-sitter 検出: AST解析有効")
+# else()
+#     message(WARNING "⚠ Tree-sitter 未検出: AST解析は無効")
+# endif()
+
+# ==============================================================================
 # ソースファイルの設定
 # ==============================================================================
 set(CORE_SOURCES
@@ -191,6 +213,7 @@ set(CORE_SOURCES
     core/MLXEngine.cpp
     core/FileScanner.cpp
     core/GraphLayout.cpp
+    # core/TreeSitterParser.cpp  # Tree-sitter導入後に有効化
 )
 
 # macOS の場合は main.mm を使用、それ以外は main.cpp
