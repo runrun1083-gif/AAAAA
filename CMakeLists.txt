@@ -213,6 +213,7 @@ set(CORE_SOURCES
     core/MLXEngine.cpp
     core/FileScanner.cpp
     core/GraphLayout.cpp
+    core/ResourceManager.cpp
     # core/TreeSitterParser.cpp  # Tree-sitter導入後に有効化
 )
 

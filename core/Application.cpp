@@ -142,6 +142,11 @@ bool Application::initialize() {
     // フォントのセットアップ
     setupFonts();
 
+    // リソースマネージャーの初期化（最優先）
+    m_resourceManager = resource::GetResourceManager();
+    m_resourceManager->startMonitoring();
+    std::cout << "[Application] リソースマネージャー初期化完了（定期監視開始）" << std::endl;
+
     // ノードシステムの初期化
     m_nodeSystem = std::make_unique<node::NodeSystem>();
     std::cout << "[Application] ノードシステム初期化完了" << std::endl;
@@ -219,6 +224,11 @@ void Application::shutdown() {
         std::cout << "[Application] シャットダウン開始..." << std::endl;
 
         m_running = false;
+
+        // リソースマネージャーの監視停止
+        if (m_resourceManager) {
+            m_resourceManager->stopMonitoring();
+        }
 
         // リソースのクリーンアップ
         m_nodeSystem.reset();

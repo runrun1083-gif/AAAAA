@@ -4,6 +4,7 @@
 #include "MLXEngine.h"
 #include "FileScanner.h"
 #include "GraphLayout.h"
+#include "ResourceManager.h"
 #include <memory>
 #include <string>
 
@@ -95,6 +96,7 @@ private:
     };
 
     GLFWwindow* m_window = nullptr;             ///< GLFWウィンドウ
+    resource::ResourceManager* m_resourceManager = nullptr;  ///< リソースマネージャー
     std::unique_ptr<node::NodeSystem> m_nodeSystem;  ///< ノード管理システム
     std::unique_ptr<mlx::MLXEngine> m_mlxEngine;     ///< MLX推論エンジン
     std::unique_ptr<filesystem::FileScanner> m_fileScanner;  ///< ファイルスキャナー
