@@ -1,10 +1,6 @@
 #pragma once
 
-#include "NodeSystem.h"
-#include "MLXEngine.h"
-#include "FileScanner.h"
-#include "GraphLayout.h"
-#include "ResourceManager.h"
+#include "CoreEngine.h"
 #include <memory>
 #include <string>
 

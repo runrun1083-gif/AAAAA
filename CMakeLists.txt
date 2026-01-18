@@ -209,11 +209,7 @@ target_link_libraries(imnodes PUBLIC imgui)
 # ==============================================================================
 set(CORE_SOURCES
     core/Application.cpp
-    core/NodeSystem.cpp
-    core/MLXEngine.cpp
-    core/FileScanner.cpp
-    core/GraphLayout.cpp
-    core/ResourceManager.cpp
+    core/CoreEngine.cpp
     # core/TreeSitterParser.cpp  # Tree-sitter導入後に有効化
 )
 
