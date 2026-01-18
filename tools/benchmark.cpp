@@ -4,8 +4,7 @@
 // QA必須項目の自動計測とエビデンス出力
 // ==============================================================================
 
-#include "../core/FileScanner.h"
-#include "../core/GraphLayout.h"
+#include "../core/CoreEngine.h"
 #include <iostream>
 #include <chrono>
 #include <iomanip>

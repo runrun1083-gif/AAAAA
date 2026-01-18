@@ -258,12 +258,15 @@ endif()
 # ==============================================================================
 add_executable(benchmark
     tools/benchmark.cpp
-    core/FileScanner.cpp
-    core/GraphLayout.cpp
+    core/CoreEngine.cpp
 )
 
 target_include_directories(benchmark PRIVATE
     ${CMAKE_SOURCE_DIR}/core
+)
+
+target_link_libraries(benchmark PRIVATE
+    EnTT::EnTT
 )
 
 # ==============================================================================

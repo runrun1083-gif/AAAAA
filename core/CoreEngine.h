@@ -508,5 +508,106 @@ private:
 } // namespace mlx
 
 // ==============================================================================
+// §7. TreeSitterParser - AST解析エンジン（Tree-sitter統合）
+// ==============================================================================
+
+// 前方宣言（Tree-sitter API）
+typedef struct TSParser TSParser;
+typedef struct TSTree TSTree;
+typedef struct TSNode TSNode;
+typedef struct TSLanguage TSLanguage;
+
+namespace ast {
+
+/**
+ * @brief シンボル情報
+ */
+struct Symbol {
+    std::string name;
+    std::string type;  ///< "class", "function", "variable"
+    std::string filePath;
+    uint32_t startLine;
+    uint32_t endLine;
+    std::vector<std::string> dependencies;
+};
+
+/**
+ * @brief Tree-sitter AST パーサー
+ *
+ * 改善法への対応:
+ * - Clang LibTooling: 正確だが重い ✗
+ * - 自前パーサー: 軽いが不正確 ✗
+ * - Tree-sitter: 正確 + 軽量 + インクリメンタル ✓
+ */
+class TreeSitterParser {
+public:
+    TreeSitterParser();
+    ~TreeSitterParser();
+
+    std::vector<Symbol> parseFile(const std::string& filePath,
+                                   const std::string& sourceCode);
+
+    std::vector<Symbol> parseIncremental(const std::string& filePath,
+                                          const std::string& oldContent,
+                                          const std::string& newContent);
+
+    void setLanguage(const std::string& extension);
+
+    struct ParseStats {
+        size_t totalParsed = 0;
+        size_t incrementalUpdates = 0;
+        double avgParseTimeMs = 0.0;
+        size_t symbolCount = 0;
+    };
+
+    ParseStats getStats() const { return m_stats; }
+
+private:
+    TSParser* m_parser = nullptr;
+    const TSLanguage* m_language = nullptr;
+    std::unordered_map<std::string, TSTree*> m_treeCache;
+    ParseStats m_stats;
+
+    void extractSymbols(const TSNode* node,
+                       const std::string& filePath,
+                       const std::string& sourceCode,
+                       std::vector<Symbol>& symbols);
+
+    Symbol processNode(const TSNode* node,
+                      const std::string& filePath,
+                      const std::string& sourceCode);
+};
+
+/**
+ * @brief AST インメモリキャッシュ
+ *
+ * 64GB RAM活用: LRU退避機能付き
+ */
+class ASTCache {
+public:
+    void addSymbols(const std::string& filePath,
+                   const std::vector<Symbol>& symbols);
+
+    std::vector<Symbol> search(const std::string& query) const;
+    std::vector<Symbol> getFileSymbols(const std::string& filePath) const;
+
+    struct DependencyGraph {
+        std::unordered_map<std::string, std::vector<std::string>> edges;
+    };
+
+    DependencyGraph buildDependencyGraph() const;
+
+    size_t getMemoryUsageBytes() const;
+    void evictToTarget(size_t targetBytes);
+
+private:
+    std::unordered_map<std::string, std::vector<Symbol>> m_symbolsByFile;
+    std::unordered_map<std::string, std::vector<Symbol>> m_symbolsByName;
+    std::vector<std::string> m_lruQueue;
+};
+
+} // namespace ast
+
+// ==============================================================================
 // End of CoreEngine.h
 // ==============================================================================
