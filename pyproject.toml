@@ -1,0 +1,52 @@
+[project]
+name = "ai-dev-station"
+version = "0.1.0"
+description = "M1 Mac 64GB専用 世界最速AI開発ステーション - Flowise再定義 C++/EnTT/MLX実装"
+authors = [
+    {name = "AI Dev Station Team"}
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+dependencies = [
+    "dearpygui>=1.11.1",
+    "pybind11>=2.13.1",
+    "mlx>=0.20.0",
+    "numpy>=2.0.0",
+    "watchdog>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "black>=24.0.0",
+    "mypy>=1.11.0",
+    "ruff>=0.6.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=8.0.0",
+    "black>=24.0.0",
+    "mypy>=1.11.0",
+    "ruff>=0.6.0",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
