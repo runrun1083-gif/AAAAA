@@ -49,3 +49,13 @@ models/*.safetensors
 # ユーザー設定（個人情報保護）
 .env
 *.local
+
+# Added by Auto-Backup
+_deps/
+ai_dev_station
+models/
+_deps/
+ai_dev_station
+legacy_source/
+compile_commands.json
+.DS_Store
