@@ -149,9 +149,9 @@ bool Application::initialize() {
     m_mlxEngine = std::make_unique<mlx::MLXEngine>();
     std::cout << "[Application] MLXエンジン初期化完了" << std::endl;
 
-    // モデルのスキャン
-    auto models = m_mlxEngine->scanModels(m_modelsDir);
-    std::cout << "[Application] 検出されたモデル: " << models.size() << "個" << std::endl;
+    // モデルのスキャン（キャッシュに保存）
+    m_cachedModels = m_mlxEngine->scanModels(m_modelsDir);
+    std::cout << "[Application] 検出されたモデル: " << m_cachedModels.size() << "個" << std::endl;
 
     // ファイルスキャナーの初期化
     m_fileScanner = std::make_unique<filesystem::FileScanner>();
@@ -407,9 +407,8 @@ void Application::renderSidebar() {
     ImGui::Begin("サイドバー");
 
     if (ImGui::CollapsingHeader("モデル", ImGuiTreeNodeFlags_DefaultOpen)) {
-        auto models = m_mlxEngine->scanModels(m_modelsDir);
-
-        for (const auto& model : models) {
+        // キャッシュされたモデルリストを使用（無限ループ防止）
+        for (const auto& model : m_cachedModels) {
             if (ImGui::Selectable(model.name.c_str())) {
                 std::cout << "[UI] モデル選択: " << model.name << std::endl;
                 m_mlxEngine->loadModel(model.path);
@@ -488,19 +487,24 @@ void Application::setupFonts() {
 
     // 日本語フォントの読み込み
     std::vector<std::string> fontPaths = {
+        "/System/Library/Fonts/Hiragino Sans GB.ttc",       // macOS確認済み
+        "/Library/Fonts/Arial Unicode.ttf",                  // macOSフォールバック
         "resources/fonts/NotoSansJP-Regular.ttf",
-        "../resources/fonts/NotoSansJP-Regular.ttf",
-        "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc",  // macOSフォールバック
-        "/System/Library/Fonts/Hiragino Sans GB.ttc"        // macOSフォールバック
+        "../resources/fonts/NotoSansJP-Regular.ttf"
     };
 
     ImFont* font = nullptr;
     for (const auto& path : fontPaths) {
+        std::cout << "[Application] フォント検索中: " << path << std::endl;
+
         if (fs::exists(path)) {
+            std::cout << "[Application] フォント発見: " << path << std::endl;
+
             // 日本語グリフ範囲を指定
             ImFontConfig config;
             config.OversampleH = 2;
             config.OversampleV = 1;
+            config.PixelSnapH = true;
 
             font = io.Fonts->AddFontFromFileTTF(
                 path.c_str(),
@@ -510,8 +514,10 @@ void Application::setupFonts() {
             );
 
             if (font) {
-                std::cout << "[Application] 日本語フォント読み込み成功: " << path << std::endl;
+                std::cout << "[Application] ✓ 日本語フォント読み込み成功: " << path << std::endl;
                 break;
+            } else {
+                std::cerr << "[Application] ✗ フォント読み込み失敗: " << path << std::endl;
             }
         }
     }
@@ -522,7 +528,10 @@ void Application::setupFonts() {
         io.Fonts->AddFontDefault();
     }
 
-    std::cout << "[Application] フォント読み込み完了" << std::endl;
+    // フォントアトラスを明示的にビルド
+    io.Fonts->Build();
+
+    std::cout << "[Application] フォントアトラスビルド完了" << std::endl;
 }
 
 void Application::createDemoNodes() {
