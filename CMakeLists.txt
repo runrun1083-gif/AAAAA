@@ -79,9 +79,10 @@ set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(external/GLFW)
 
-# EnTT
+# EnTT (ヘッダーオンリーライブラリ)
 message(STATUS "EnTT を読み込み中...")
-add_subdirectory(external/EnTT)
+add_library(EnTT INTERFACE)
+target_include_directories(EnTT INTERFACE external/EnTT/src)
 
 # ==============================================================================
 # Dear ImGui ライブラリの構築
@@ -206,7 +207,7 @@ target_include_directories(ai_dev_station PRIVATE
 target_link_libraries(ai_dev_station PRIVATE
     imgui
     imnodes
-    EnTT::EnTT
+    EnTT
     glfw
 )
 
@@ -238,7 +239,7 @@ target_include_directories(benchmark PRIVATE
 )
 
 target_link_libraries(benchmark PRIVATE
-    EnTT::EnTT
+    EnTT
 )
 
 # ==============================================================================
