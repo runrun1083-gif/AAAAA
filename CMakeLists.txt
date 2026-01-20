@@ -98,15 +98,15 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 )
 
-# Metal または OpenGL バックエンド
+# OpenGL3バックエンド（全プラットフォーム共通）
+target_sources(imgui PRIVATE
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+)
+
+# macOSの場合、Metal対応も追加（将来の実装用）
 if(APPLE)
     target_sources(imgui PRIVATE
         ${IMGUI_DIR}/backends/imgui_impl_metal.mm
-    )
-    target_compile_definitions(imgui PUBLIC IMGUI_IMPL_METAL_CPP)
-else()
-    target_sources(imgui PRIVATE
-        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
     )
 endif()
 

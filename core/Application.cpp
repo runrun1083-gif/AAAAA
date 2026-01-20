@@ -72,15 +72,14 @@ bool Application::initialize() {
 
     std::cout << "[Application] GLFW初期化完了" << std::endl;
 
-#ifdef __APPLE__
-    // macOS: Metal設定
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    std::cout << "[Application] Metalバックエンドを使用" << std::endl;
-#else
-    // Linux: OpenGL設定
+    // OpenGL設定（全プラットフォーム共通）
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);  // macOS必須
+    std::cout << "[Application] OpenGL 3.3バックエンドを使用（macOS）" << std::endl;
+#else
     std::cout << "[Application] OpenGL 3.3バックエンドを使用" << std::endl;
 #endif
 
@@ -101,10 +100,9 @@ bool Application::initialize() {
 
     std::cout << "[Application] ウィンドウ作成完了: " << m_windowWidth << "x" << m_windowHeight << std::endl;
 
-#ifndef __APPLE__
+    // OpenGLコンテキスト設定（全プラットフォーム）
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1);  // VSync有効
-#endif
 
     // Dear ImGuiの初期化
     IMGUI_CHECKVERSION();
