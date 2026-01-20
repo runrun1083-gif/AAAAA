@@ -106,7 +106,7 @@ private:
     std::string m_modelsDir;                    ///< モデルディレクトリ
     std::string m_selectedFolder;               ///< 選択されたフォルダ（ファイルシステムモード）
     bool m_filesystemLayoutComputed = false;    ///< レイアウト計算済みフラグ
-    std::vector<ModelInfo> m_cachedModels;      ///< モデルリストキャッシュ（無限ループ防止）
+    std::vector<mlx::ModelInfo> m_cachedModels; ///< モデルリストキャッシュ（無限ループ防止）
 };
 
 } // namespace app
