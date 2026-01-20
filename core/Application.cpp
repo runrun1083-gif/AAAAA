@@ -11,6 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <filesystem>
+#include <set>
 
 namespace fs = std::filesystem;
 
@@ -330,6 +331,26 @@ void Application::renderNodeEditor() {
         ImGui::Spacing();
         ImGui::Text("タイプ: %s", node::nodeTypeToString(type.type));
 
+        // タイプに応じた編集UI
+        if (type.type == node::NodeType::Input) {
+            static char inputBuffer[256] = "";
+            ImGui::PushItemWidth(200);
+            if (ImGui::InputText("##input", inputBuffer, sizeof(inputBuffer))) {
+                std::cout << "[UI] 入力ノード編集: " << inputBuffer << std::endl;
+            }
+            ImGui::PopItemWidth();
+        } else if (type.type == node::NodeType::Prompt) {
+            static char promptBuffer[512] = "";
+            ImGui::PushItemWidth(200);
+            if (ImGui::InputTextMultiline("##prompt", promptBuffer, sizeof(promptBuffer), ImVec2(200, 60))) {
+                std::cout << "[UI] プロンプト編集: " << promptBuffer << std::endl;
+            }
+            ImGui::PopItemWidth();
+        } else if (type.type == node::NodeType::LLM) {
+            // モデル選択（将来実装）
+            ImGui::Text("モデル: %s", name.name.c_str());
+        }
+
         // 状態表示
         const char* stateStr = "アイドル";
         ImVec4 stateColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -363,9 +384,10 @@ void Application::renderNodeEditor() {
         ImNodes::EndNode();
 
         // ノードの位置を設定（初回のみ）
-        static bool positionsSet = false;
-        if (!positionsSet) {
+        static std::set<int> initializedNodes;
+        if (initializedNodes.find(nodeId) == initializedNodes.end()) {
             ImNodes::SetNodeGridSpacePos(nodeId, ImVec2(pos.x, pos.y));
+            initializedNodes.insert(nodeId);
         }
     }
 
@@ -385,6 +407,16 @@ void Application::renderNodeEditor() {
     }
 
     ImNodes::EndNodeEditor();
+
+    // ノードのドラッグ位置を保存
+    for (auto entity : nodes) {
+        int nodeId = static_cast<int>(entity);
+        ImVec2 nodePos = ImNodes::GetNodeGridSpacePos(nodeId);
+
+        auto& pos = registry.get<node::PositionComponent>(entity);
+        pos.x = nodePos.x;
+        pos.y = nodePos.y;
+    }
 
     // 新しいリンクの作成
     int startPin, endPin;
