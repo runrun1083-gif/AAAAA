@@ -2,11 +2,10 @@
 #include <imgui.h>
 #include <imnodes.h>
 #include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #ifdef __APPLE__
-#include <backends/imgui_impl_metal.h>
-#else
-#include <backends/imgui_impl_opengl3.h>
+#define GL_SILENCE_DEPRECATION  // macOS OpenGL非推奨警告を抑制
 #endif
 
 #include <GLFW/glfw3.h>
@@ -121,12 +120,9 @@ bool Application::initialize() {
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 
 #ifdef __APPLE__
-    // TODO: Metal初期化
-    // ImGui_ImplMetal_Init(device);
-    std::cout << "[Application] 警告: Metal初期化は未実装（OpenGLフォールバック）" << std::endl;
-    ImGui_ImplOpenGL3_Init("#version 150");
+    ImGui_ImplOpenGL3_Init("#version 150");  // macOS用GLSLバージョン
 #else
-    ImGui_ImplOpenGL3_Init("#version 330");
+    ImGui_ImplOpenGL3_Init("#version 330");  // Linux用GLSLバージョン
 #endif
 
     std::cout << "[Application] ImGuiバックエンド初期化完了" << std::endl;
