@@ -68,53 +68,25 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
 
 # ==============================================================================
-# 外部ライブラリの取得 (FetchContent)
+# 外部ライブラリの読み込み (external/ フォルダから)
 # ==============================================================================
-include(FetchContent)
-
-# Dear ImGui
-message(STATUS "Dear ImGui を取得中...")
-FetchContent_Declare(
-    imgui
-    GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG v1.91.7
-)
-FetchContent_MakeAvailable(imgui)
-
-# imnodes
-message(STATUS "imnodes を取得中...")
-FetchContent_Declare(
-    imnodes
-    GIT_REPOSITORY https://github.com/Nelarius/imnodes.git
-    GIT_TAG v0.5
-)
-FetchContent_MakeAvailable(imnodes)
-
-# EnTT
-message(STATUS "EnTT を取得中...")
-FetchContent_Declare(
-    entt
-    GIT_REPOSITORY https://github.com/skypjack/entt.git
-    GIT_TAG v3.13.2
-)
-FetchContent_MakeAvailable(entt)
+message(STATUS "外部ライブラリを読み込み中...")
 
 # GLFW (ウィンドウ管理)
-message(STATUS "GLFW を取得中...")
-FetchContent_Declare(
-    glfw
-    GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG 3.4
-)
+message(STATUS "GLFW を読み込み中...")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(glfw)
+add_subdirectory(external/GLFW)
+
+# EnTT
+message(STATUS "EnTT を読み込み中...")
+add_subdirectory(external/EnTT)
 
 # ==============================================================================
 # Dear ImGui ライブラリの構築
 # ==============================================================================
-set(IMGUI_DIR ${imgui_SOURCE_DIR})
+set(IMGUI_DIR ${CMAKE_SOURCE_DIR}/external/Dear_ImGui)
 
 add_library(imgui STATIC
     ${IMGUI_DIR}/imgui.cpp
@@ -163,11 +135,11 @@ endif()
 # imnodes ライブラリの構築
 # ==============================================================================
 add_library(imnodes STATIC
-    ${imnodes_SOURCE_DIR}/imnodes.cpp
+    ${CMAKE_SOURCE_DIR}/external/imnodes/imnodes.cpp
 )
 
 target_include_directories(imnodes PUBLIC
-    ${imnodes_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/external/imnodes
     ${IMGUI_DIR}
 )
 
