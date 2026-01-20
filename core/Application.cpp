@@ -2,11 +2,10 @@
 #include <imgui.h>
 #include <imnodes.h>
 #include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl3.h>
 
 #ifdef __APPLE__
-#include <backends/imgui_impl_metal.h>
-#else
-#include <backends/imgui_impl_opengl3.h>
+#define GL_SILENCE_DEPRECATION  // macOS OpenGL非推奨警告を抑制
 #endif
 
 #include <GLFW/glfw3.h>
@@ -72,15 +71,14 @@ bool Application::initialize() {
 
     std::cout << "[Application] GLFW初期化完了" << std::endl;
 
-#ifdef __APPLE__
-    // macOS: Metal設定
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    std::cout << "[Application] Metalバックエンドを使用" << std::endl;
-#else
-    // Linux: OpenGL設定
+    // OpenGL設定（全プラットフォーム共通）
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);  // macOS必須
+    std::cout << "[Application] OpenGL 3.3バックエンドを使用（macOS）" << std::endl;
+#else
     std::cout << "[Application] OpenGL 3.3バックエンドを使用" << std::endl;
 #endif
 
@@ -101,10 +99,9 @@ bool Application::initialize() {
 
     std::cout << "[Application] ウィンドウ作成完了: " << m_windowWidth << "x" << m_windowHeight << std::endl;
 
-#ifndef __APPLE__
+    // OpenGLコンテキスト設定（全プラットフォーム）
     glfwMakeContextCurrent(m_window);
     glfwSwapInterval(1);  // VSync有効
-#endif
 
     // Dear ImGuiの初期化
     IMGUI_CHECKVERSION();
@@ -123,12 +120,9 @@ bool Application::initialize() {
     ImGui_ImplGlfw_InitForOpenGL(m_window, true);
 
 #ifdef __APPLE__
-    // TODO: Metal初期化
-    // ImGui_ImplMetal_Init(device);
-    std::cout << "[Application] 警告: Metal初期化は未実装（OpenGLフォールバック）" << std::endl;
-    ImGui_ImplOpenGL3_Init("#version 150");
+    ImGui_ImplOpenGL3_Init("#version 150");  // macOS: GLSL 1.50
 #else
-    ImGui_ImplOpenGL3_Init("#version 330");
+    ImGui_ImplOpenGL3_Init("#version 330");  // Linux: GLSL 3.30
 #endif
 
     std::cout << "[Application] ImGuiバックエンド初期化完了" << std::endl;
@@ -182,12 +176,7 @@ void Application::run() {
         glfwPollEvents();
 
         // フレーム開始
-#ifdef __APPLE__
-        // TODO: Metal
         ImGui_ImplOpenGL3_NewFrame();
-#else
-        ImGui_ImplOpenGL3_NewFrame();
-#endif
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
@@ -200,18 +189,10 @@ void Application::run() {
         int display_w, display_h;
         glfwGetFramebufferSize(m_window, &display_w, &display_h);
 
-#ifdef __APPLE__
-        // TODO: Metal
         glViewport(0, 0, display_w, display_h);
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#else
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-#endif
 
         glfwSwapBuffers(m_window);
     }
@@ -238,11 +219,7 @@ void Application::shutdown() {
         ImNodes::DestroyContext();
 
         // ImGuiのクリーンアップ
-#ifdef __APPLE__
         ImGui_ImplOpenGL3_Shutdown();
-#else
-        ImGui_ImplOpenGL3_Shutdown();
-#endif
         ImGui_ImplGlfw_Shutdown();
         ImGui::DestroyContext();
 

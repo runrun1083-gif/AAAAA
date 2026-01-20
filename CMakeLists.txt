@@ -35,15 +35,21 @@ if(APPLE)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fobjc-arc")
 
-    # Metal フレームワーク
-    find_library(METAL_LIBRARY Metal REQUIRED)
-    find_library(METALKIT_LIBRARY MetalKit REQUIRED)
+    # OpenGL フレームワーク（メイン）
+    find_package(OpenGL REQUIRED)
+    message(STATUS "✓ OpenGL フレームワーク検出")
+
+    # Metal フレームワーク（将来実装用）
+    find_library(METAL_LIBRARY Metal)
+    find_library(METALKIT_LIBRARY MetalKit)
     find_library(COCOA_LIBRARY Cocoa REQUIRED)
     find_library(IOKIT_LIBRARY IOKit REQUIRED)
     find_library(COREVIDEO_LIBRARY CoreVideo REQUIRED)
     find_library(QUARTZCORE_LIBRARY QuartzCore REQUIRED)
 
-    message(STATUS "✓ Metal フレームワーク検出")
+    if(METAL_LIBRARY AND METALKIT_LIBRARY)
+        message(STATUS "✓ Metal フレームワーク検出（将来実装用）")
+    endif()
 
 elseif(UNIX)
     # Linux 最適化
@@ -90,14 +96,19 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imnodes)
 
-# EnTT
+# EnTT (ヘッダーオンリーライブラリ)
 message(STATUS "EnTT を取得中...")
 FetchContent_Declare(
     entt
     GIT_REPOSITORY https://github.com/skypjack/entt.git
     GIT_TAG v3.13.2
 )
-FetchContent_MakeAvailable(entt)
+# ヘッダーのみ取得し、CMakeLists.txtを実行しない
+FetchContent_Populate(entt)
+add_library(EnTT INTERFACE)
+target_include_directories(EnTT INTERFACE ${entt_SOURCE_DIR}/src)
+add_library(EnTT::EnTT ALIAS EnTT)
+message(STATUS "✓ EnTT ヘッダー取得完了: ${entt_SOURCE_DIR}/src")
 
 # GLFW (ウィンドウ管理)
 message(STATUS "GLFW を取得中...")
@@ -125,15 +136,15 @@ add_library(imgui STATIC
     ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
 )
 
-# Metal または OpenGL バックエンド
+# OpenGL3バックエンド（全プラットフォーム共通）
+target_sources(imgui PRIVATE
+    ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
+)
+
+# macOSの場合、Metal対応も追加（将来の実装用・現在は未使用）
 if(APPLE)
     target_sources(imgui PRIVATE
         ${IMGUI_DIR}/backends/imgui_impl_metal.mm
-    )
-    target_compile_definitions(imgui PUBLIC IMGUI_IMPL_METAL_CPP)
-else()
-    target_sources(imgui PRIVATE
-        ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
     )
 endif()
 
@@ -142,21 +153,22 @@ target_include_directories(imgui PUBLIC
     ${IMGUI_DIR}/backends
 )
 
-target_link_libraries(imgui PUBLIC glfw)
+target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
 if(APPLE)
     target_link_libraries(imgui PUBLIC
-        ${METAL_LIBRARY}
-        ${METALKIT_LIBRARY}
         ${COCOA_LIBRARY}
         ${IOKIT_LIBRARY}
         ${COREVIDEO_LIBRARY}
         ${QUARTZCORE_LIBRARY}
     )
-elseif(HAVE_OPENGL)
-    target_link_libraries(imgui PUBLIC
-        OpenGL::GL
-    )
+    # Metal（将来実装用・現在は未使用）
+    if(METAL_LIBRARY AND METALKIT_LIBRARY)
+        target_link_libraries(imgui PUBLIC
+            ${METAL_LIBRARY}
+            ${METALKIT_LIBRARY}
+        )
+    endif()
 endif()
 
 # ==============================================================================
@@ -236,21 +248,23 @@ target_link_libraries(ai_dev_station PRIVATE
     imnodes
     EnTT::EnTT
     glfw
+    OpenGL::GL
 )
 
 if(APPLE)
     target_link_libraries(ai_dev_station PRIVATE
-        ${METAL_LIBRARY}
-        ${METALKIT_LIBRARY}
         ${COCOA_LIBRARY}
         ${IOKIT_LIBRARY}
         ${COREVIDEO_LIBRARY}
         ${QUARTZCORE_LIBRARY}
     )
-elseif(HAVE_OPENGL)
-    target_link_libraries(ai_dev_station PRIVATE
-        OpenGL::GL
-    )
+    # Metal（将来実装用・現在は未使用）
+    if(METAL_LIBRARY AND METALKIT_LIBRARY)
+        target_link_libraries(ai_dev_station PRIVATE
+            ${METAL_LIBRARY}
+            ${METALKIT_LIBRARY}
+        )
+    endif()
 endif()
 
 # ==============================================================================
