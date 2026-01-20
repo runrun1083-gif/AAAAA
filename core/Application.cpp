@@ -486,9 +486,41 @@ void Application::renderStatusBar() {
 void Application::setupFonts() {
     ImGuiIO& io = ImGui::GetIO();
 
-    // デフォルトフォントを読み込み
-    // TODO: 日本語フォント（Noto Sans JP）の統合
-    io.Fonts->AddFontDefault();
+    // 日本語フォントの読み込み
+    std::vector<std::string> fontPaths = {
+        "resources/fonts/NotoSansJP-Regular.ttf",
+        "../resources/fonts/NotoSansJP-Regular.ttf",
+        "/System/Library/Fonts/ヒラギノ角ゴシック W4.ttc",  // macOSフォールバック
+        "/System/Library/Fonts/Hiragino Sans GB.ttc"        // macOSフォールバック
+    };
+
+    ImFont* font = nullptr;
+    for (const auto& path : fontPaths) {
+        if (fs::exists(path)) {
+            // 日本語グリフ範囲を指定
+            ImFontConfig config;
+            config.OversampleH = 2;
+            config.OversampleV = 1;
+
+            font = io.Fonts->AddFontFromFileTTF(
+                path.c_str(),
+                18.0f,
+                &config,
+                io.Fonts->GetGlyphRangesJapanese()
+            );
+
+            if (font) {
+                std::cout << "[Application] 日本語フォント読み込み成功: " << path << std::endl;
+                break;
+            }
+        }
+    }
+
+    // フォールバック
+    if (!font) {
+        std::cout << "[Application] 警告: 日本語フォントが見つかりません。デフォルトフォントを使用" << std::endl;
+        io.Fonts->AddFontDefault();
+    }
 
     std::cout << "[Application] フォント読み込み完了" << std::endl;
 }
