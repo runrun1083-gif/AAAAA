@@ -39,6 +39,10 @@
 // 外部ライブラリ
 #include <entt/entt.hpp>
 
+// Python C API forward declaration (avoid including Python.h in header)
+struct _object;
+typedef struct _object PyObject;
+
 namespace fs = std::filesystem;
 
 // グローバル定数
