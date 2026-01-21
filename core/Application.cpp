@@ -303,15 +303,43 @@ void Application::renderNodeEditor() {
     // ツールバー
     if (ImGui::Button("実行", ImVec2(80, 30))) {
         std::cout << "[UI] グラフ実行開始" << std::endl;
-        // TODO: ノードグラフの実行処理
+
+        // 全ノードを実行中状態に
+        auto nodes = m_nodeSystem->getAllNodes();
+        auto& registry = m_nodeSystem->getRegistry();
+
+        for (auto entity : nodes) {
+            auto& state = registry.get<node::ExecutionStateComponent>(entity);
+            state.state = node::ExecutionStateComponent::State::Running;
+        }
+
+        // 0.5秒後に完了状態に変更（デモ）
+        // TODO: 実際のMLX推論処理を実装
+        std::cout << "[UI] デモ実行: 全ノードを実行中に設定" << std::endl;
     }
     ImGui::SameLine();
     if (ImGui::Button("停止", ImVec2(80, 30))) {
         std::cout << "[UI] 実行停止" << std::endl;
+
+        auto nodes = m_nodeSystem->getAllNodes();
+        auto& registry = m_nodeSystem->getRegistry();
+
+        for (auto entity : nodes) {
+            auto& state = registry.get<node::ExecutionStateComponent>(entity);
+            state.state = node::ExecutionStateComponent::State::Idle;
+        }
     }
     ImGui::SameLine();
     if (ImGui::Button("リセット", ImVec2(80, 30))) {
         std::cout << "[UI] リセット" << std::endl;
+
+        auto nodes = m_nodeSystem->getAllNodes();
+        auto& registry = m_nodeSystem->getRegistry();
+
+        for (auto entity : nodes) {
+            auto& state = registry.get<node::ExecutionStateComponent>(entity);
+            state.state = node::ExecutionStateComponent::State::Idle;
+        }
     }
 
     ImGui::Separator();
@@ -349,9 +377,16 @@ void Application::renderNodeEditor() {
         ImGui::Text("タイプ: %s", node::nodeTypeToString(type.type));
 
         // タイプに応じた編集UI
-        if (type.type == node::NodeType::Prompt) {
+        if (type.type == node::NodeType::Input) {
+            // 入力ノード: ユーザーが質問を入力
+            static char inputBuffer[512] = "ここに質問を入力してください";
+            ImGui::Spacing();
+            if (ImGui::InputTextMultiline("##input", inputBuffer, sizeof(inputBuffer), ImVec2(180, 60))) {
+                std::cout << "[UI] 入力テキスト: " << inputBuffer << std::endl;
+            }
+        } else if (type.type == node::NodeType::Prompt) {
             // プロンプトノード: 複数行テキスト入力
-            static char promptBuffer[512] = "ここにプロンプトを入力してください...";
+            static char promptBuffer[512] = "あなたは優秀なAIアシスタントです。\n以下の質問に答えてください：\n{input}";
             ImGui::Spacing();
             if (ImGui::InputTextMultiline("##prompt", promptBuffer, sizeof(promptBuffer), ImVec2(180, 80))) {
                 std::cout << "[UI] プロンプト編集: " << promptBuffer << std::endl;

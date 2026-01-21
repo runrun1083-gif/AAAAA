@@ -1311,15 +1311,26 @@ bool MLXEngine::isInferring() const {
 }
 
 float MLXEngine::getGPUUsage() const {
-    return 0.5f;
+    // TODO: 実際のGPU使用率取得（IOKit使用）
+    // 現在は動作デモ用に変動値を返す
+    static float lastUsage = 0.5f;
+    float delta = ((rand() % 200) - 100) / 1000.0f;  // -0.1 ~ +0.1
+    lastUsage += delta;
+    if (lastUsage < 0.0f) lastUsage = 0.0f;
+    if (lastUsage > 1.0f) lastUsage = 1.0f;
+    return lastUsage;
 }
 
 float MLXEngine::getMemoryUsage() const {
+    // TODO: 実際のシステムメモリ使用率取得（mach API使用）
+    // 現在は簡易実装
     if (m_currentModel) {
-        float totalMemoryMB = 64 * 1024;
-        return m_currentModel->memoryUsageMB / totalMemoryMB;
+        float totalMemoryMB = 64 * 1024.0f;  // 64GB
+        float usedMemoryMB = m_currentModel->memoryUsageMB + 8000.0f;  // モデル + システム
+        return usedMemoryMB / totalMemoryMB;
     }
-    return 0.0f;
+    // モデル未ロード時は固定値
+    return 0.15f;  // 約10GB使用中
 }
 
 float MLXEngine::getTokensPerSecond() const {
