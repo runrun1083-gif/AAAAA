@@ -1340,14 +1340,44 @@ float MLXEngine::getTokensPerSecond() const {
 std::string MLXEngine::runInference(const std::string& prompt, size_t maxTokens, float temperature) {
     (void)temperature;
 
-    std::string response = "これはMLXエンジンからのダミーレスポンスです。\n";
-    response += "プロンプト: " + prompt + "\n";
-    response += "最大トークン数: " + std::to_string(maxTokens) + "\n";
-    response += "\n";
-    response += "実際のMLX C++ APIが統合されると、ここで実際のLLM推論が実行されます。\n";
-    response += "現在のモデル: " + m_currentModel->name + "\n";
+    std::cout << "[MLXEngine] 推論実行中..." << std::endl;
+    std::cout << "[MLXEngine] モデル: " << m_currentModel->name << std::endl;
+    std::cout << "[MLXEngine] プロンプト: " << prompt.substr(0, 100) << "..." << std::endl;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    // シミュレーション: 段階的に生成（実際のトークン生成を模倣）
+    std::string response;
+
+    // ヘッダー情報
+    response += "[" + m_currentModel->name + "からの回答]\n\n";
+
+    // 簡易的な応答生成（実際のMLX推論の代わり）
+    std::vector<std::string> sampleResponses = {
+        "こんにちは！お手伝いできることがあれば教えてください。",
+        "それは興味深い質問ですね。詳しく説明させていただきます。",
+        "ご質問ありがとうございます。私の知識に基づいてお答えします。",
+        "なるほど、その件についてお答えします。",
+        "良い質問ですね。いくつかのポイントに分けて説明します。"
+    };
+
+    size_t responseIndex = prompt.length() % sampleResponses.size();
+    response += sampleResponses[responseIndex];
+    response += "\n\n";
+
+    // プロンプトの一部をエコー
+    response += "あなたの質問: \"" + prompt.substr(0, std::min(size_t(100), prompt.length())) + "...\"\n\n";
+
+    // 追加情報
+    response += "【注意】\n";
+    response += "これは現在、MLX C++ APIの統合を待っているシミュレーション応答です。\n";
+    response += "実際のLLM推論は、Python MLXバインディングが統合されると動作します。\n\n";
+
+    response += "生成トークン数: " + std::to_string(maxTokens) + " (最大)\n";
+    response += "モデルパス: " + m_currentModel->path + "\n";
+
+    // リアルタイム生成をシミュレート（実際のストリーミングを模倣）
+    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+
+    std::cout << "[MLXEngine] 推論完了" << std::endl;
 
     return response;
 }

@@ -107,6 +107,12 @@ private:
     std::string m_selectedFolder;               ///< 選択されたフォルダ（ファイルシステムモード）
     bool m_filesystemLayoutComputed = false;    ///< レイアウト計算済みフラグ
     std::vector<mlx::ModelInfo> m_cachedModels; ///< モデルリストキャッシュ（無限ループ防止）
+
+    // 実行結果
+    std::string m_inputText;                    ///< 入力テキスト
+    std::string m_promptTemplate;               ///< プロンプトテンプレート
+    std::string m_lastResult;                   ///< 最後の推論結果
+    std::atomic<bool> m_isExecuting{false};     ///< 実行中フラグ
 };
 
 } // namespace app

@@ -49,6 +49,10 @@ Application::Application() {
         m_modelsDir = "models";  // デフォルト
     }
 
+    // デフォルト値を設定
+    m_inputText = "ここに質問を入力してください";
+    m_promptTemplate = "あなたは優秀なAIアシスタントです。\n以下の質問に答えてください：\n{input}";
+
     std::cout << "[Application] モデルディレクトリ: " << m_modelsDir << std::endl;
 }
 
@@ -302,20 +306,71 @@ void Application::renderNodeEditor() {
 
     // ツールバー
     if (ImGui::Button("実行", ImVec2(80, 30))) {
-        std::cout << "[UI] グラフ実行開始" << std::endl;
+        if (m_isExecuting) {
+            std::cout << "[UI] 既に実行中です" << std::endl;
+        } else {
+            std::cout << "[UI] グラフ実行開始" << std::endl;
 
-        // 全ノードを実行中状態に
-        auto nodes = m_nodeSystem->getAllNodes();
-        auto& registry = m_nodeSystem->getRegistry();
+            // 全ノードを実行中状態に
+            auto nodes = m_nodeSystem->getAllNodes();
+            auto& registry = m_nodeSystem->getRegistry();
 
-        for (auto entity : nodes) {
-            auto& state = registry.get<node::ExecutionStateComponent>(entity);
-            state.state = node::ExecutionStateComponent::State::Running;
+            for (auto entity : nodes) {
+                auto& state = registry.get<node::ExecutionStateComponent>(entity);
+                state.state = node::ExecutionStateComponent::State::Running;
+            }
+
+            // 入力テキストとプロンプトテンプレートを取得（m_inputText/m_promptTemplateに保存済み）
+            std::string finalPrompt = m_promptTemplate;
+
+            // {input}をm_inputTextで置換
+            size_t pos = finalPrompt.find("{input}");
+            if (pos != std::string::npos) {
+                finalPrompt.replace(pos, 7, m_inputText);
+            }
+
+            std::cout << "[UI] 最終プロンプト: " << finalPrompt.substr(0, 100) << "..." << std::endl;
+
+            // MLX推論を非同期実行
+            m_isExecuting = true;
+
+            mlx::InferenceRequest request;
+            request.prompt = finalPrompt;
+            request.maxTokens = 512;
+            request.temperature = 0.7f;
+
+            request.onComplete = [this, nodes, &registry](const std::string& result) {
+                std::cout << "[UI] 推論完了: " << result.substr(0, 100) << "..." << std::endl;
+
+                // 結果を保存
+                m_lastResult = result;
+
+                // 全ノードを完了状態に
+                for (auto entity : nodes) {
+                    auto& state = registry.get<node::ExecutionStateComponent>(entity);
+                    state.state = node::ExecutionStateComponent::State::Completed;
+                }
+
+                m_isExecuting = false;
+            };
+
+            request.onError = [this, nodes, &registry](const std::string& error) {
+                std::cerr << "[UI] 推論エラー: " << error << std::endl;
+
+                // エラーを結果に保存
+                m_lastResult = "エラー: " + error;
+
+                // 全ノードをエラー状態に
+                for (auto entity : nodes) {
+                    auto& state = registry.get<node::ExecutionStateComponent>(entity);
+                    state.state = node::ExecutionStateComponent::State::Error;
+                }
+
+                m_isExecuting = false;
+            };
+
+            m_mlxEngine->inferAsync(request);
         }
-
-        // 0.5秒後に完了状態に変更（デモ）
-        // TODO: 実際のMLX推論処理を実装
-        std::cout << "[UI] デモ実行: 全ノードを実行中に設定" << std::endl;
     }
     ImGui::SameLine();
     if (ImGui::Button("停止", ImVec2(80, 30))) {
@@ -382,14 +437,16 @@ void Application::renderNodeEditor() {
             static char inputBuffer[512] = "ここに質問を入力してください";
             ImGui::Spacing();
             if (ImGui::InputTextMultiline("##input", inputBuffer, sizeof(inputBuffer), ImVec2(180, 60))) {
-                std::cout << "[UI] 入力テキスト: " << inputBuffer << std::endl;
+                m_inputText = std::string(inputBuffer);
+                std::cout << "[UI] 入力テキスト: " << m_inputText << std::endl;
             }
         } else if (type.type == node::NodeType::Prompt) {
             // プロンプトノード: 複数行テキスト入力
             static char promptBuffer[512] = "あなたは優秀なAIアシスタントです。\n以下の質問に答えてください：\n{input}";
             ImGui::Spacing();
             if (ImGui::InputTextMultiline("##prompt", promptBuffer, sizeof(promptBuffer), ImVec2(180, 80))) {
-                std::cout << "[UI] プロンプト編集: " << promptBuffer << std::endl;
+                m_promptTemplate = std::string(promptBuffer);
+                std::cout << "[UI] プロンプト編集: " << m_promptTemplate << std::endl;
             }
         } else if (type.type == node::NodeType::LLM) {
             // LLMノード: モデル名表示
@@ -397,9 +454,12 @@ void Application::renderNodeEditor() {
             ImGui::TextWrapped("モデル: %s", name.name.c_str());
         } else if (type.type == node::NodeType::Output) {
             // 出力ノード: 結果表示エリア
-            static char outputBuffer[1024] = "（実行結果がここに表示されます）";
             ImGui::Spacing();
-            ImGui::TextWrapped("%s", outputBuffer);
+            if (m_lastResult.empty()) {
+                ImGui::TextWrapped("（実行結果がここに表示されます）");
+            } else {
+                ImGui::TextWrapped("%s", m_lastResult.c_str());
+            }
         }
 
         // 状態表示
