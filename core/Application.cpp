@@ -315,6 +315,38 @@ void Application::renderNodeEditor() {
             auto nodes = m_nodeSystem->getAllNodes();
             auto& registry = m_nodeSystem->getRegistry();
 
+            // LLMノードを探してモデルをロード
+            std::string modelToLoad;
+            for (auto entity : nodes) {
+                const auto& type = registry.get<node::TypeComponent>(entity);
+                if (type.type == node::NodeType::LLM) {
+                    const auto& name = registry.get<node::NameComponent>(entity);
+                    modelToLoad = name.name;
+                    std::cout << "[UI] LLMノード検出: " << modelToLoad << std::endl;
+                    break;
+                }
+            }
+
+            // モデルパスを構築してロード
+            if (!modelToLoad.empty()) {
+                // キャッシュされたモデルリストから対応するモデルを探す
+                bool foundModel = false;
+                for (const auto& model : m_cachedModels) {
+                    // ノード名がモデル名に部分一致するかチェック
+                    if (model.name.find(modelToLoad) != std::string::npos ||
+                        modelToLoad.find(model.name) != std::string::npos) {
+                        std::cout << "[UI] モデルをロード: " << model.path << std::endl;
+                        m_mlxEngine->loadModel(model.path);
+                        foundModel = true;
+                        break;
+                    }
+                }
+
+                if (!foundModel) {
+                    std::cerr << "[UI] エラー: モデル '" << modelToLoad << "' が見つかりません" << std::endl;
+                }
+            }
+
             for (auto entity : nodes) {
                 auto& state = registry.get<node::ExecutionStateComponent>(entity);
                 state.state = node::ExecutionStateComponent::State::Running;
