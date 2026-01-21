@@ -300,6 +300,23 @@ void Application::render() {
 void Application::renderNodeEditor() {
     ImGui::Begin("ノードエディタ");
 
+    // ツールバー
+    if (ImGui::Button("実行", ImVec2(80, 30))) {
+        std::cout << "[UI] グラフ実行開始" << std::endl;
+        // TODO: ノードグラフの実行処理
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("停止", ImVec2(80, 30))) {
+        std::cout << "[UI] 実行停止" << std::endl;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("リセット", ImVec2(80, 30))) {
+        std::cout << "[UI] リセット" << std::endl;
+    }
+
+    ImGui::Separator();
+    ImGui::Spacing();
+
     ImNodes::BeginNodeEditor();
 
     // 既存のノードを描画
@@ -332,26 +349,26 @@ void Application::renderNodeEditor() {
         ImGui::Text("タイプ: %s", node::nodeTypeToString(type.type));
 
         // タイプに応じた編集UI
-        if (type.type == node::NodeType::Input) {
-            static char inputBuffer[256] = "";
-            ImGui::PushItemWidth(200);
-            if (ImGui::InputText("##input", inputBuffer, sizeof(inputBuffer))) {
-                std::cout << "[UI] 入力ノード編集: " << inputBuffer << std::endl;
-            }
-            ImGui::PopItemWidth();
-        } else if (type.type == node::NodeType::Prompt) {
-            static char promptBuffer[512] = "";
-            ImGui::PushItemWidth(200);
-            if (ImGui::InputTextMultiline("##prompt", promptBuffer, sizeof(promptBuffer), ImVec2(200, 60))) {
+        if (type.type == node::NodeType::Prompt) {
+            // プロンプトノード: 複数行テキスト入力
+            static char promptBuffer[512] = "ここにプロンプトを入力してください...";
+            ImGui::Spacing();
+            if (ImGui::InputTextMultiline("##prompt", promptBuffer, sizeof(promptBuffer), ImVec2(180, 80))) {
                 std::cout << "[UI] プロンプト編集: " << promptBuffer << std::endl;
             }
-            ImGui::PopItemWidth();
         } else if (type.type == node::NodeType::LLM) {
-            // モデル選択（将来実装）
-            ImGui::Text("モデル: %s", name.name.c_str());
+            // LLMノード: モデル名表示
+            ImGui::Spacing();
+            ImGui::TextWrapped("モデル: %s", name.name.c_str());
+        } else if (type.type == node::NodeType::Output) {
+            // 出力ノード: 結果表示エリア
+            static char outputBuffer[1024] = "（実行結果がここに表示されます）";
+            ImGui::Spacing();
+            ImGui::TextWrapped("%s", outputBuffer);
         }
 
         // 状態表示
+        ImGui::Spacing();
         const char* stateStr = "アイドル";
         ImVec4 stateColor = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
 
@@ -453,33 +470,41 @@ void Application::renderSidebar() {
     ImGui::Spacing();
 
     if (ImGui::CollapsingHeader("ノード追加", ImGuiTreeNodeFlags_DefaultOpen)) {
+        static int nodeCounter = 0;
+
         if (ImGui::Button("LLMノード", ImVec2(-1, 0))) {
+            float x = 200.0f + (nodeCounter % 3) * 250.0f;
+            float y = 150.0f + (nodeCounter / 3) * 200.0f;
             m_nodeSystem->createNode(
                 node::NodeType::LLM,
                 "LLM",
-                100.0f,
-                100.0f
+                x, y
             );
+            nodeCounter++;
             std::cout << "[UI] LLMノード追加" << std::endl;
         }
 
         if (ImGui::Button("プロンプトノード", ImVec2(-1, 0))) {
+            float x = 200.0f + (nodeCounter % 3) * 250.0f;
+            float y = 150.0f + (nodeCounter / 3) * 200.0f;
             m_nodeSystem->createNode(
                 node::NodeType::Prompt,
                 "プロンプト",
-                100.0f,
-                200.0f
+                x, y
             );
+            nodeCounter++;
             std::cout << "[UI] プロンプトノード追加" << std::endl;
         }
 
         if (ImGui::Button("出力ノード", ImVec2(-1, 0))) {
+            float x = 200.0f + (nodeCounter % 3) * 250.0f;
+            float y = 150.0f + (nodeCounter / 3) * 200.0f;
             m_nodeSystem->createNode(
                 node::NodeType::Output,
                 "出力",
-                100.0f,
-                300.0f
+                x, y
             );
+            nodeCounter++;
             std::cout << "[UI] 出力ノード追加" << std::endl;
         }
     }
