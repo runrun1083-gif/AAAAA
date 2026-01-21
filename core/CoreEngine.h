@@ -503,6 +503,10 @@ private:
     std::atomic<bool> m_isInferring{false};
     std::atomic<float> m_tokensPerSecond{0.0f};
     mutable std::mutex m_mutex;
+
+    // Python objects for loaded model (must hold GIL when accessing)
+    PyObject* m_model = nullptr;
+    PyObject* m_tokenizer = nullptr;
 };
 
 } // namespace mlx

@@ -288,10 +288,12 @@ add_executable(benchmark
 
 target_include_directories(benchmark PRIVATE
     ${CMAKE_SOURCE_DIR}/core
+    ${Python3_INCLUDE_DIRS}
 )
 
 target_link_libraries(benchmark PRIVATE
     EnTT::EnTT
+    Python3::Python
 )
 
 # ==============================================================================

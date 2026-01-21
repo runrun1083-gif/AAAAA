@@ -1265,21 +1265,107 @@ bool MLXEngine::loadModel(const std::string& modelPath) {
 
     std::cout << "[MLXEngine] モデルをロード中: " << modelPath << std::endl;
 
+    // 既存のモデルをアンロード
     if (m_currentModel) {
         std::cout << "[MLXEngine] 既存のモデルをアンロード: " << m_currentModel->name << std::endl;
+
+        // Python objectsをクリーンアップ
+        if (m_model || m_tokenizer) {
+            PyGILState_STATE gstate = PyGILState_Ensure();
+            Py_XDECREF(m_tokenizer);
+            Py_XDECREF(m_model);
+            PyGILState_Release(gstate);
+            m_model = nullptr;
+            m_tokenizer = nullptr;
+        }
+
         m_currentModel.reset();
     }
 
+    // GILを取得してPythonコードを実行
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    try {
+        // mlx_lmモジュールをインポート
+        PyObject* mlx_lm = PyImport_ImportModule("mlx_lm");
+        if (mlx_lm == nullptr) {
+            PyErr_Print();
+            std::cerr << "[MLXEngine] エラー: mlx_lmモジュールのインポートに失敗" << std::endl;
+            std::cerr << "[MLXEngine] ヒント: pip install mlx-lm を実行してください" << std::endl;
+            PyGILState_Release(gstate);
+            return false;
+        }
+
+        // mlx_lm.load関数を取得
+        PyObject* load_func = PyObject_GetAttrString(mlx_lm, "load");
+        if (load_func == nullptr || !PyCallable_Check(load_func)) {
+            PyErr_Print();
+            std::cerr << "[MLXEngine] エラー: mlx_lm.load関数が見つかりません" << std::endl;
+            Py_DECREF(mlx_lm);
+            PyGILState_Release(gstate);
+            return false;
+        }
+
+        // mlx_lm.load(model_path)を呼び出し
+        PyObject* model_path_arg = PyUnicode_FromString(modelPath.c_str());
+        PyObject* load_args = PyTuple_Pack(1, model_path_arg);
+
+        std::cout << "[MLXEngine] Python: mlx_lm.load(\"" << modelPath << "\") を呼び出し中..." << std::endl;
+
+        PyObject* model_and_tokenizer = PyObject_CallObject(load_func, load_args);
+
+        Py_DECREF(load_args);
+        Py_DECREF(model_path_arg);
+        Py_DECREF(load_func);
+        Py_DECREF(mlx_lm);
+
+        if (model_and_tokenizer == nullptr) {
+            PyErr_Print();
+            std::cerr << "[MLXEngine] エラー: モデルのロードに失敗しました" << std::endl;
+            std::cerr << "[MLXEngine] モデルパス: " << modelPath << std::endl;
+            PyGILState_Release(gstate);
+            return false;
+        }
+
+        // タプルから model と tokenizer を取り出す
+        if (!PyTuple_Check(model_and_tokenizer) || PyTuple_Size(model_and_tokenizer) != 2) {
+            std::cerr << "[MLXEngine] エラー: mlx_lm.loadの戻り値が不正です（tuple(model, tokenizer)を期待）" << std::endl;
+            Py_DECREF(model_and_tokenizer);
+            PyGILState_Release(gstate);
+            return false;
+        }
+
+        m_model = PyTuple_GetItem(model_and_tokenizer, 0);
+        m_tokenizer = PyTuple_GetItem(model_and_tokenizer, 1);
+
+        // 参照カウントを増やす（タプルから取り出した要素は借用参照）
+        Py_INCREF(m_model);
+        Py_INCREF(m_tokenizer);
+
+        // タプル自体は不要になったので解放
+        Py_DECREF(model_and_tokenizer);
+
+        std::cout << "[MLXEngine] Python: モデルロード成功" << std::endl;
+
+    } catch (const std::exception& e) {
+        std::cerr << "[MLXEngine] 例外: " << e.what() << std::endl;
+        PyGILState_Release(gstate);
+        return false;
+    }
+
+    // GILを解放
+    PyGILState_Release(gstate);
+
+    // ModelInfo構造体を作成
     m_currentModel = std::make_unique<ModelInfo>();
     m_currentModel->name = fs::path(modelPath).filename().string();
     m_currentModel->path = modelPath;
-    m_currentModel->parameterCount = 7000000000;
-    m_currentModel->memoryUsageMB = 4096;
+    // TODO: Pythonオブジェクトから実際のパラメータ数とメモリ使用量を取得
+    m_currentModel->parameterCount = 0;  // 未実装
+    m_currentModel->memoryUsageMB = 0;    // 未実装
     m_currentModel->isLoaded = true;
 
     std::cout << "[MLXEngine] モデルロード完了: " << m_currentModel->name << std::endl;
-    std::cout << "[MLXEngine] パラメータ数: " << (m_currentModel->parameterCount / 1000000000.0) << "B" << std::endl;
-    std::cout << "[MLXEngine] メモリ使用量: " << m_currentModel->memoryUsageMB << " MB" << std::endl;
 
     return true;
 }
@@ -1289,6 +1375,25 @@ void MLXEngine::unloadModel() {
 
     if (m_currentModel) {
         std::cout << "[MLXEngine] モデルをアンロード: " << m_currentModel->name << std::endl;
+
+        // Python objectsをクリーンアップ
+        if (m_model || m_tokenizer) {
+            PyGILState_STATE gstate = PyGILState_Ensure();
+
+            if (m_tokenizer) {
+                Py_DECREF(m_tokenizer);
+                m_tokenizer = nullptr;
+            }
+
+            if (m_model) {
+                Py_DECREF(m_model);
+                m_model = nullptr;
+            }
+
+            PyGILState_Release(gstate);
+            std::cout << "[MLXEngine] Python objects解放完了" << std::endl;
+        }
+
         m_currentModel.reset();
     }
 }
@@ -1383,6 +1488,10 @@ std::string MLXEngine::runInference(const std::string& prompt, size_t maxTokens,
         return "エラー: モデルがロードされていません";
     }
 
+    if (!m_model || !m_tokenizer) {
+        return "エラー: モデルまたはトークナイザーがロードされていません（内部エラー）";
+    }
+
     std::cout << "[MLXEngine] 推論実行中..." << std::endl;
     std::cout << "[MLXEngine] モデル: " << m_currentModel->name << std::endl;
     std::cout << "[MLXEngine] プロンプト: " << prompt.substr(0, 100) << "..." << std::endl;
@@ -1413,61 +1522,22 @@ std::string MLXEngine::runInference(const std::string& prompt, size_t maxTokens,
             return response;
         }
 
-        // mlx_lm.loadを取得してモデルをロード
-        PyObject* load_func = PyObject_GetAttrString(mlx_lm, "load");
-        if (load_func == nullptr || !PyCallable_Check(load_func)) {
-            PyErr_Print();
-            response = "エラー: mlx_lm.load関数が見つかりません。";
-            Py_DECREF(generate_func);
-            Py_DECREF(mlx_lm);
-            PyGILState_Release(gstate);
-            return response;
-        }
-
-        // モデルパスを引数として準備
-        PyObject* model_path_arg = PyUnicode_FromString(m_currentModel->path.c_str());
-        PyObject* load_args = PyTuple_Pack(1, model_path_arg);
-
-        std::cout << "[MLXEngine] モデルロード中: " << m_currentModel->path << std::endl;
-
-        // モデルをロード
-        PyObject* model_and_tokenizer = PyObject_CallObject(load_func, load_args);
-        Py_DECREF(load_args);
-        Py_DECREF(model_path_arg);
-        Py_DECREF(load_func);
-
-        if (model_and_tokenizer == nullptr) {
-            PyErr_Print();
-            response = "エラー: モデルのロードに失敗しました。\n";
-            response += "モデルパス: " + m_currentModel->path;
-            Py_DECREF(generate_func);
-            Py_DECREF(mlx_lm);
-            PyGILState_Release(gstate);
-            return response;
-        }
-
-        // model, tokenizerを取り出す
-        PyObject* model = PyTuple_GetItem(model_and_tokenizer, 0);
-        PyObject* tokenizer = PyTuple_GetItem(model_and_tokenizer, 1);
-
-        std::cout << "[MLXEngine] モデルロード完了" << std::endl;
-
         // 推論実行: mlx_lm.generate(model, tokenizer, prompt, max_tokens=maxTokens, temperature=temperature)
         PyObject* prompt_arg = PyUnicode_FromString(prompt.c_str());
         PyObject* kwargs = PyDict_New();
         PyDict_SetItemString(kwargs, "max_tokens", PyLong_FromLong(maxTokens));
         PyDict_SetItemString(kwargs, "temperature", PyFloat_FromDouble(temperature));
 
-        PyObject* generate_args = PyTuple_Pack(3, model, tokenizer, prompt_arg);
+        // 既にロード済みのモデルとトークナイザーを使用
+        PyObject* generate_args = PyTuple_Pack(3, m_model, m_tokenizer, prompt_arg);
 
-        std::cout << "[MLXEngine] 推論実行中..." << std::endl;
+        std::cout << "[MLXEngine] Python: mlx_lm.generate() を呼び出し中..." << std::endl;
 
         PyObject* result = PyObject_Call(generate_func, generate_args, kwargs);
 
         Py_DECREF(generate_args);
         Py_DECREF(prompt_arg);
         Py_DECREF(kwargs);
-        Py_DECREF(model_and_tokenizer);
         Py_DECREF(generate_func);
         Py_DECREF(mlx_lm);
 
@@ -1492,7 +1562,7 @@ std::string MLXEngine::runInference(const std::string& prompt, size_t maxTokens,
 
         Py_DECREF(result);
 
-        std::cout << "[MLXEngine] 推論完了" << std::endl;
+        std::cout << "[MLXEngine] Python: 推論完了" << std::endl;
 
     } catch (const std::exception& e) {
         response = std::string("エラー: ") + e.what();
