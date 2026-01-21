@@ -22,6 +22,15 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ==============================================================================
+# Python3の検出（MLX推論に必要）
+# ==============================================================================
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+message(STATUS "✓ Python3 検出: ${Python3_VERSION}")
+message(STATUS "  Python実行ファイル: ${Python3_EXECUTABLE}")
+message(STATUS "  Pythonインクルード: ${Python3_INCLUDE_DIRS}")
+message(STATUS "  Pythonライブラリ: ${Python3_LIBRARIES}")
+
+# ==============================================================================
 # プラットフォーム最適化
 # ==============================================================================
 if(APPLE)
@@ -241,6 +250,7 @@ target_include_directories(ai_dev_station PRIVATE
     ${CMAKE_SOURCE_DIR}/core
     ${IMGUI_DIR}
     ${imnodes_SOURCE_DIR}
+    ${Python3_INCLUDE_DIRS}
 )
 
 target_link_libraries(ai_dev_station PRIVATE
@@ -249,6 +259,7 @@ target_link_libraries(ai_dev_station PRIVATE
     EnTT::EnTT
     glfw
     OpenGL::GL
+    Python3::Python
 )
 
 if(APPLE)

@@ -26,6 +26,10 @@
 #include <algorithm>
 #include <random>
 
+// Python C API（MLX推論に必要）
+#define PY_SSIZE_T_CLEAN
+#include <Python.h>
+
 #ifdef __APPLE__
 #include <mach/mach.h>
 #include <sys/sysctl.h>
@@ -1176,11 +1180,48 @@ void NodeSystem::executeNodeRecursive(entt::entity entity, std::string& result) 
 namespace mlx {
 
 MLXEngine::MLXEngine() {
+    std::cout << "[MLXEngine] 初期化開始..." << std::endl;
+
+    // Python初期化
+    if (!Py_IsInitialized()) {
+        Py_Initialize();
+        std::cout << "[MLXEngine] Python初期化完了" << std::endl;
+    }
+
+    // MLXモジュールをインポート
+    PyObject* mlx_module = PyImport_ImportModule("mlx.core");
+    if (mlx_module == nullptr) {
+        PyErr_Print();
+        std::cerr << "[MLXEngine] エラー: mlx.coreモジュールのインポートに失敗" << std::endl;
+        std::cerr << "[MLXEngine] ヒント: pip install mlx を実行してください" << std::endl;
+    } else {
+        std::cout << "[MLXEngine] ✓ mlx.core インポート成功" << std::endl;
+        Py_DECREF(mlx_module);
+    }
+
+    // MLX LLMモジュールをインポート
+    PyObject* mlx_lm_module = PyImport_ImportModule("mlx_lm");
+    if (mlx_lm_module == nullptr) {
+        PyErr_Print();
+        std::cerr << "[MLXEngine] エラー: mlx_lmモジュールのインポートに失敗" << std::endl;
+        std::cerr << "[MLXEngine] ヒント: pip install mlx-lm を実行してください" << std::endl;
+    } else {
+        std::cout << "[MLXEngine] ✓ mlx_lm インポート成功" << std::endl;
+        Py_DECREF(mlx_lm_module);
+    }
+
     std::cout << "[MLXEngine] 初期化完了" << std::endl;
 }
 
 MLXEngine::~MLXEngine() {
     unloadModel();
+
+    // Python終了処理
+    if (Py_IsInitialized()) {
+        Py_Finalize();
+        std::cout << "[MLXEngine] Python終了処理完了" << std::endl;
+    }
+
     std::cout << "[MLXEngine] シャットダウン完了" << std::endl;
 }
 
@@ -1338,46 +1379,127 @@ float MLXEngine::getTokensPerSecond() const {
 }
 
 std::string MLXEngine::runInference(const std::string& prompt, size_t maxTokens, float temperature) {
-    (void)temperature;
+    if (!m_currentModel) {
+        return "エラー: モデルがロードされていません";
+    }
 
     std::cout << "[MLXEngine] 推論実行中..." << std::endl;
     std::cout << "[MLXEngine] モデル: " << m_currentModel->name << std::endl;
     std::cout << "[MLXEngine] プロンプト: " << prompt.substr(0, 100) << "..." << std::endl;
 
-    // シミュレーション: 段階的に生成（実際のトークン生成を模倣）
+    // GILを取得
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
     std::string response;
 
-    // ヘッダー情報
-    response += "[" + m_currentModel->name + "からの回答]\n\n";
+    try {
+        // mlx_lmモジュールをインポート
+        PyObject* mlx_lm = PyImport_ImportModule("mlx_lm");
+        if (mlx_lm == nullptr) {
+            PyErr_Print();
+            response = "エラー: mlx_lmモジュールのインポートに失敗しました。\n";
+            response += "pip install mlx-lm を実行してください。";
+            PyGILState_Release(gstate);
+            return response;
+        }
 
-    // 簡易的な応答生成（実際のMLX推論の代わり）
-    std::vector<std::string> sampleResponses = {
-        "こんにちは！お手伝いできることがあれば教えてください。",
-        "それは興味深い質問ですね。詳しく説明させていただきます。",
-        "ご質問ありがとうございます。私の知識に基づいてお答えします。",
-        "なるほど、その件についてお答えします。",
-        "良い質問ですね。いくつかのポイントに分けて説明します。"
-    };
+        // mlx_lm.generateを取得
+        PyObject* generate_func = PyObject_GetAttrString(mlx_lm, "generate");
+        if (generate_func == nullptr || !PyCallable_Check(generate_func)) {
+            PyErr_Print();
+            response = "エラー: mlx_lm.generate関数が見つかりません。";
+            Py_DECREF(mlx_lm);
+            PyGILState_Release(gstate);
+            return response;
+        }
 
-    size_t responseIndex = prompt.length() % sampleResponses.size();
-    response += sampleResponses[responseIndex];
-    response += "\n\n";
+        // mlx_lm.loadを取得してモデルをロード
+        PyObject* load_func = PyObject_GetAttrString(mlx_lm, "load");
+        if (load_func == nullptr || !PyCallable_Check(load_func)) {
+            PyErr_Print();
+            response = "エラー: mlx_lm.load関数が見つかりません。";
+            Py_DECREF(generate_func);
+            Py_DECREF(mlx_lm);
+            PyGILState_Release(gstate);
+            return response;
+        }
 
-    // プロンプトの一部をエコー
-    response += "あなたの質問: \"" + prompt.substr(0, std::min(size_t(100), prompt.length())) + "...\"\n\n";
+        // モデルパスを引数として準備
+        PyObject* model_path_arg = PyUnicode_FromString(m_currentModel->path.c_str());
+        PyObject* load_args = PyTuple_Pack(1, model_path_arg);
 
-    // 追加情報
-    response += "【注意】\n";
-    response += "これは現在、MLX C++ APIの統合を待っているシミュレーション応答です。\n";
-    response += "実際のLLM推論は、Python MLXバインディングが統合されると動作します。\n\n";
+        std::cout << "[MLXEngine] モデルロード中: " << m_currentModel->path << std::endl;
 
-    response += "生成トークン数: " + std::to_string(maxTokens) + " (最大)\n";
-    response += "モデルパス: " + m_currentModel->path + "\n";
+        // モデルをロード
+        PyObject* model_and_tokenizer = PyObject_CallObject(load_func, load_args);
+        Py_DECREF(load_args);
+        Py_DECREF(model_path_arg);
+        Py_DECREF(load_func);
 
-    // リアルタイム生成をシミュレート（実際のストリーミングを模倣）
-    std::this_thread::sleep_for(std::chrono::milliseconds(800));
+        if (model_and_tokenizer == nullptr) {
+            PyErr_Print();
+            response = "エラー: モデルのロードに失敗しました。\n";
+            response += "モデルパス: " + m_currentModel->path;
+            Py_DECREF(generate_func);
+            Py_DECREF(mlx_lm);
+            PyGILState_Release(gstate);
+            return response;
+        }
 
-    std::cout << "[MLXEngine] 推論完了" << std::endl;
+        // model, tokenizerを取り出す
+        PyObject* model = PyTuple_GetItem(model_and_tokenizer, 0);
+        PyObject* tokenizer = PyTuple_GetItem(model_and_tokenizer, 1);
+
+        std::cout << "[MLXEngine] モデルロード完了" << std::endl;
+
+        // 推論実行: mlx_lm.generate(model, tokenizer, prompt, max_tokens=maxTokens, temperature=temperature)
+        PyObject* prompt_arg = PyUnicode_FromString(prompt.c_str());
+        PyObject* kwargs = PyDict_New();
+        PyDict_SetItemString(kwargs, "max_tokens", PyLong_FromLong(maxTokens));
+        PyDict_SetItemString(kwargs, "temperature", PyFloat_FromDouble(temperature));
+
+        PyObject* generate_args = PyTuple_Pack(3, model, tokenizer, prompt_arg);
+
+        std::cout << "[MLXEngine] 推論実行中..." << std::endl;
+
+        PyObject* result = PyObject_Call(generate_func, generate_args, kwargs);
+
+        Py_DECREF(generate_args);
+        Py_DECREF(prompt_arg);
+        Py_DECREF(kwargs);
+        Py_DECREF(model_and_tokenizer);
+        Py_DECREF(generate_func);
+        Py_DECREF(mlx_lm);
+
+        if (result == nullptr) {
+            PyErr_Print();
+            response = "エラー: 推論実行に失敗しました。";
+            PyGILState_Release(gstate);
+            return response;
+        }
+
+        // 結果を文字列に変換
+        if (PyUnicode_Check(result)) {
+            const char* result_str = PyUnicode_AsUTF8(result);
+            if (result_str != nullptr) {
+                response = std::string(result_str);
+            } else {
+                response = "エラー: 結果の変換に失敗しました。";
+            }
+        } else {
+            response = "エラー: 予期しない結果の型です。";
+        }
+
+        Py_DECREF(result);
+
+        std::cout << "[MLXEngine] 推論完了" << std::endl;
+
+    } catch (const std::exception& e) {
+        response = std::string("エラー: ") + e.what();
+    }
+
+    // GILを解放
+    PyGILState_Release(gstate);
 
     return response;
 }
